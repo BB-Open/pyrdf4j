@@ -1,2 +1,2 @@
 # datenadler_rdf4j
-Connector to RDF4J Graph Database
+Datenadler connector to RDF4J Graph Database
