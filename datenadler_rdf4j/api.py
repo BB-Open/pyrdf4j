@@ -70,22 +70,22 @@ class Tripelstore(object):
 
     def get(self, uri, **params):
         """Low level GET request"""
-        response = requests.get(**params)
+        response = requests.get(uri, **params)
         return response
 
     def post(self, uri, **params):
         """Low level POST request"""
-        response = requests.post(**params)
+        response = requests.post(uri, **params)
         return response
 
     def put(self, uri, **params):
         """Low level PUT request"""
-        response = requests.put(**params)
+        response = requests.put(uri, **params)
         return response
 
     def delete(self, uri, **params):
         """Low level DELETE request"""
-        response = requests.delete(**params)
+        response = requests.delete(uri, **params)
         return response
 
 
@@ -126,7 +126,7 @@ class Tripelstore(object):
    ].
 """.format(repository_id=repository_id, repository_label=repository_label)
         headers = {'content-type': 'application/x-turtle'}
-        response = requests.put(
+        response = self.put(
             self.RDF4J_base + 'repositories/{}'.format(repository_id),
             data=params,
             headers=headers,
@@ -144,7 +144,7 @@ class Tripelstore(object):
         """
         headers = {'content-type': 'application/x-turtle'}
         repo_uri = self.repository_uris[repository_id]
-        response = requests.delete(
+        response = self.delete(
             repo_uri,
             headers=headers,
             auth=HTTPBasicAuth(ADMIN_USER, ADMIN_PASS),
