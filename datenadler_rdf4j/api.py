@@ -7,7 +7,7 @@ from SPARQLWrapper import SPARQLWrapper2
 
 from datenadler_rdf4j.constants import RDF4J_BASE, ADMIN_PASS, ADMIN_USER
 from datenadler_rdf4j.errors import HarvestURINotReachable, \
-    TripelStoreBulkLoadError, TripelStoreCreateRepositoryError
+    TripelStoreBulkLoadError, TripelStoreCreateRepositoryError, TripelStoreDropRepositoryError
 
 
 class SPARQL(object):
@@ -63,10 +63,31 @@ class Tripelstore(object):
     def __init__(self, RDF4J_base=None):
 
         self.repository_uris = {}
-        if RDF4J_base:
+        if RDF4J_base is not None:
             self.RDF4J_base = RDF4J_base
         else:
             self.RDF4J_base = RDF4J_BASE
+
+    def get(self, uri, **params):
+        """Low level GET request"""
+        response = requests.get(**params)
+        return response
+
+    def post(self, uri, **params):
+        """Low level POST request"""
+        response = requests.post(**params)
+        return response
+
+    def put(self, uri, **params):
+        """Low level PUT request"""
+        response = requests.put(**params)
+        return response
+
+    def delete(self, uri, **params):
+        """Low level DELETE request"""
+        response = requests.delete(**params)
+        return response
+
 
     def sparql_for_repository(self, repository):
         """
@@ -74,7 +95,7 @@ class Tripelstore(object):
         :return:
         """
         if repository not in self.repository_uris:
-            self.generate_repository_uri(repository)
+            self.cache_repository_uri(repository)
         return SPARQL(self.repository_uris[repository])
 
     def rest_create_repository(self, repository_id, repository_label):
@@ -83,7 +104,7 @@ class Tripelstore(object):
         a repository sparqlwrapper for it
         :param repository_id: Id of the repository to be created
         :param repository_label: Description of the repository to be created
-        :return:
+        :return: the response from the RDF4J server
         """
         params = """
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
@@ -109,22 +130,49 @@ class Tripelstore(object):
             self.RDF4J_base + 'repositories/{}'.format(repository_id),
             data=params,
             headers=headers,
-            auth=HTTPBasicAuth('rdf4j-admin', ADMIN_PASS),
+            auth=HTTPBasicAuth(ADMIN_USER, ADMIN_PASS),
         )
-        self.generate_repository_uri(repository_id)
+        self.cache_repository_uri(repository_id)
 
         return response
 
-    def generate_repository_uri(self, repository):
+    def rest_drop_repository(self, repository_id):
         """
-        :param repository:
+        Drops a repository in the tripel store and deletes the repository sparqlwrapper of it
+        :param repository_id: Id of the repository to be dropped
+        :return: the response from the tripel store
+        """
+        headers = {'content-type': 'application/x-turtle'}
+        repo_uri = self.repository_uris[repository_id]
+        response = requests.delete(
+            repo_uri,
+            headers=headers,
+            auth=HTTPBasicAuth(ADMIN_USER, ADMIN_PASS),
+        )
+
+        self.uncache_repository_uri(repository_id)
+        return response
+
+    def cache_repository_uri(self, repository_id):
+        """
+        Cache a repository_id
+        :param repository_id: The repository ID
         :return:
         """
         blaze_uri = self.RDF4J_base + \
-                    '/repository/{repository}/sparql'
-        blaze_uri_with_repository = blaze_uri.format(repository=repository)
-        self.repository_uris[repository] = blaze_uri_with_repository
+                    '/repositories/{}'
+        blaze_uri_with_repository = blaze_uri.format(repository_id)
+        self.repository_uris[repository_id] = blaze_uri_with_repository
         return blaze_uri_with_repository
+
+    def uncache_repository_uri(self, repository):
+        """
+        UnCache a repository_id
+        :param repository_id: The repository ID
+        :return:
+        """
+        if repository in self.repository_uris:
+            del self.repository_uris[repository]
 
     def rest_bulk_load_from_uri(self, repository, uri, content_type, clear_repository=False):
         """
@@ -145,7 +193,7 @@ class Tripelstore(object):
             self.empty_repository(repository)
 
         # push it into the tripelstore
-        blaze_uri_with_repository = self.generate_repository_uri(repository)
+        blaze_uri_with_repository = self.cache_repository_uri(repository)
         headers = {'Content-Type': content_type}
         response = requests.post(
             blaze_uri_with_repository,
@@ -154,19 +202,19 @@ class Tripelstore(object):
         )
         return response
 
-    def graph_from_uri(self, repository, uri, content_type, clear_repository=False):
+    def graph_from_uri(self, repository_id, uri, content_type, clear_repository=False):
         """
-        :param repository:
+        :param repository_id:
         :param uri:
         :param content_type:
         :param clear_repository:
         :return:
         """
-        self.create_repository(repository)
+        self.create_repository(repository_id)
         response = self.rest_bulk_load_from_uri(
-            repository, uri, content_type, clear_repository=clear_repository)
+            repository_id, uri, content_type, clear_repository=clear_repository)
         if response.status_code == 200:
-            return self.sparql_for_repository(repository), response
+            return self.sparql_for_repository(repository_id), response
         else:
             raise TripelStoreBulkLoadError(response.content)
 
@@ -184,6 +232,20 @@ class Tripelstore(object):
             msg = str(response.status_code) + ': ' + str(response.content)
             raise TripelStoreCreateRepositoryError(msg)
 
+    def drop_repository(self, repository_id):
+        """
+        :param repository_id:
+        :return:
+        """
+        response = self.rest_drop_repository(repository_id)
+        if response.status_code in [204]:
+            return True
+        else:
+            msg = str(response.status_code) + ': ' + str(response.content)
+            raise TripelStoreDropRepositoryError(msg)
+
+
+
     def move_data_between_repositorys(self, target_repository, source_repository):
         """
         :param target_repository:
@@ -192,8 +254,8 @@ class Tripelstore(object):
         """
         self.create_repository(source_repository)
         self.create_repository(target_repository)
-        source = self.generate_repository_uri(source_repository)
-        target = self.generate_repository_uri(target_repository)
+        source = self.cache_repository_uri(source_repository)
+        target = self.cache_repository_uri(target_repository)
         mime_type = 'application/rdf+xml'
         headers = {
             'Accept': mime_type,
@@ -233,7 +295,7 @@ class Tripelstore(object):
         :return:
         """
         self.create_repository(repository)
-        source = self.generate_repository_uri(repository)
+        source = self.cache_repository_uri(repository)
 
         headers = {
             'Accept': mime_type
@@ -251,7 +313,7 @@ class Tripelstore(object):
         :return:
         """
         self.create_repository(repository)
-        source = self.generate_repository_uri(repository)
+        source = self.cache_repository_uri(repository)
         mime_type = 'application/rdf+xml'
         query = '''DELETE {?s ?p ?o . } Where {?s ?p ?o}'''
 

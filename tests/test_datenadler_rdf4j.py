@@ -13,6 +13,8 @@ class TestRepositoryAPI(TestCase):
     def test_create_repository(self):
         sparql_endpoint = tripel_store.create_repository('test')
 
+    def test_drop_repository(self):
+        sparql_endpoint = tripel_store.drop_repository('test')
 
 
 

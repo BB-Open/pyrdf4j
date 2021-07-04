@@ -11,3 +11,6 @@ class TripelStoreBulkLoadError(Exception):
 class TripelStoreCreateRepositoryError(Exception):
     """TripelStoreCreateRepositoryError"""
 
+
+class TripelStoreDropRepositoryError(Exception):
+    """TripelStoreDropRepositoryError"""
