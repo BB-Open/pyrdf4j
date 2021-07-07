@@ -11,7 +11,7 @@ from datenadler_rdf4j.constants import RDF4J_BASE, ADMIN_PASS, ADMIN_USER
 from datenadler_rdf4j.errors import HarvestURINotReachable, \
     TripleStoreBulkLoadError, TripleStoreCreateRepositoryError, TripleStoreDropRepositoryError, \
     TripleStoreCannotStartTransaction, TripleStoreCannotCommitTransaction, TripleStoreTerminatingError, \
-    TripleStoreCannotRollbackTransaction, TripleStoreRollbackOccurred
+    TripleStoreCannotRollbackTransaction, TripleStoreRollbackOccurred, TripleStoreCreateRepositoryAlreadyExists
 
 
 class SPARQL():
@@ -170,24 +170,25 @@ class Triplestore():
         response = requests.delete(uri, **params)
         return response
 
+    def repo_id_to_uri(self, repo_id):
+        repo_uri = self.RDF4J_base + 'repositories/{}'.format(repo_id)
+        return repo_uri
 
-    def sparql_for_repository(self, repository):
-        """
-        :param repository:
-        :return:
-        """
-        if repository not in self.repository_uris:
-            self.cache_repository_uri(repository)
-        return SPARQL(self.repository_uris[repository])
 
-    def rest_create_repository(self, repository_id, repository_label):
+    def rest_create_repository(self, repo_id, repo_label, auth=None):
         """
         Creates a repository in the triplestore and registers
         a repository sparqlwrapper for it
-        :param repository_id: Id of the repository to be created
-        :param repository_label: Description of the repository to be created
+        :param repo_id: Id of the repository to be created
+        :param repo_label: Description of the repository to be created
+        :param auth: Optional user credential in form of a HTTPBasicAuth instance (testing only)
         :return: the response from the RDF4J server
         """
+        if auth is None:
+            auth = HTTPBasicAuth(ADMIN_USER, ADMIN_PASS)
+
+        repo_uri = self.repo_id_to_uri(repo_id)
+
         params = """
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix rep: <http://www.openrdf.org/config/repository#>.
@@ -196,8 +197,8 @@ class Triplestore():
 @prefix ns: <http://www.openrdf.org/config/sail/native#>.
 
 [] a rep:Repository ;
-   rep:repositoryID "{repository_id}" ;
-   rdfs:label "{repository_label}" ;
+   rep:repositoryID "{repo_id}" ;
+   rdfs:label "{repo_label}" ;
    rep:repositoryImpl [
       rep:repositoryType "openrdf:SailRepository" ;
       sr:sailImpl [
@@ -206,73 +207,39 @@ class Triplestore():
          ns:tripleIndexes "spoc,posc"        
       ]
    ].
-""".format(repository_id=repository_id, repository_label=repository_label)
+""".format(repo_id=repo_id, repo_label=repo_label)
         headers = {'content-type': 'application/x-turtle'}
         response = self.put(
-            self.RDF4J_base + 'repositories/{}'.format(repository_id),
+            repo_uri,
             data=params,
             headers=headers,
-            auth=HTTPBasicAuth(ADMIN_USER, ADMIN_PASS),
+            auth=auth,
         )
-        self.cache_repository_uri(repository_id)
 
         return response
 
-    def rest_drop_repository(self, repository_id):
+    def rest_drop_repository(self, repo_id, auth=None):
         """
         Drops a repository in the triple store and deletes the repository sparqlwrapper of it
         :param repository_id: Id of the repository to be dropped
         :return: the response from the triple store
         """
+
+        if auth is None:
+            auth = HTTPBasicAuth(ADMIN_USER, ADMIN_PASS)
+
+        repo_uri = self.repo_id_to_uri(repo_id)
+
         headers = {'content-type': 'application/x-turtle'}
-        repo_uri = self.repository_uris[repository_id]
         response = self.delete(
             repo_uri,
             headers=headers,
-            auth=HTTPBasicAuth(ADMIN_USER, ADMIN_PASS),
+            auth=auth,
         )
 
-        self.uncache_repository_uri(repository_id)
         return response
 
-    def cache_repository_uri(self, repository_id):
-        """
-        Cache a repository_id
-        :param repository_id: The repository ID
-        :return:
-        """
-        if repository_id in self.repository_uris:
-            return self.repository_uris[repository_id]
-        blaze_uri = self.RDF4J_base + \
-                    'repositories/{}'
-        blaze_uri_with_repository = blaze_uri.format(repository_id)
-        self.repository_uris[repository_id] = blaze_uri_with_repository
-        return blaze_uri_with_repository
 
-    def uncache_repository_uri(self, repository):
-        """
-        UnCache a repository_id
-        :param repository_id: The repository ID
-        :return:
-        """
-        if repository in self.repository_uris:
-            del self.repository_uris[repository]
-
-    def transaction_uri(self, repository_id):
-        # start a transaction and return the associated transaction URI
-        blaze_uri_with_repository = self.cache_repository_uri(repository_id)
-
-        response = self.post(
-            blaze_uri_with_repository + '/transactions'
-        )
-        return response.headers['Location']
-
-    def commit(self, transcation_uri):
-        # commit a transaction and return the response status
-        response = self.put(
-            transcation_uri + '?action=COMMIT'
-        )
-        return response.status_code
 
     @Transaction()
     def rest_bulk_load_from_uri(self, repo_uri, uri, content_type, clear_repository=False, repo_label=None):
@@ -324,16 +291,21 @@ class Triplestore():
         else:
             raise TripleStoreBulkLoadError(response.content)
 
-    def create_repository(self, repository_id, repository_label=None):
+    def create_repository(self, repository_id, repository_label=None, auth=None):
         """
-        :param repository:
+        :param repository_id: ID of the repository to create
+        :param repository_label: (Optional) Label for the repository
+        :param auth: Optional user credential in form of a HTTPBasicAuth instance (testing only)
         :return:
         """
         if repository_label is None:
             repository_label = repository_id
-        response = self.rest_create_repository(repository_id, repository_label)
-        if response.status_code in [200, 201, 204, 409]:
-            return self.sparql_for_repository(repository_id)
+        response = self.rest_create_repository(repository_id, repository_label, auth=auth)
+        if response.status_code in [HTTPStatus.NO_CONTENT]:
+            return response
+        elif response.status_code == HTTPStatus.CONFLICT:
+            msg = str(response.status_code) + ': ' + str(response.content)
+            raise TripleStoreCreateRepositoryAlreadyExists(msg)
         else:
             msg = str(response.status_code) + ': ' + str(response.content)
             raise TripleStoreCreateRepositoryError(msg)
@@ -345,10 +317,11 @@ class Triplestore():
         """
         response = self.rest_drop_repository(repository_id)
         if response.status_code in [204]:
-            return True
+            return response
         else:
             msg = str(response.status_code) + ': ' + str(response.content)
             raise TripleStoreDropRepositoryError(msg)
+
 
 
 

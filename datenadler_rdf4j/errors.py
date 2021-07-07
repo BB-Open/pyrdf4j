@@ -12,6 +12,10 @@ class TripleStoreCreateRepositoryError(Exception):
     """TripleStoreCreateRepositoryError"""
 
 
+class TripleStoreCreateRepositoryAlreadyExists(Exception):
+    """TripleStoreCreateRepositoryAlreadyExists"""
+
+
 class TripleStoreDropRepositoryError(Exception):
     """TripleStoreDropRepositoryError"""
 
