@@ -1,10 +1,11 @@
 from requests.auth import HTTPBasicAuth
+from http import HTTPStatus
 
 from datenadler_rdf4j import __version__
 
 from unittest import TestCase
 
-from datenadler_rdf4j.api import tripel_store
+from datenadler_rdf4j.api import triple_store
 from datenadler_rdf4j.constants import RDF4J_BASE, ADMIN_USER, ADMIN_PASS, VIEWER_PASS, VIEWER_USER, EDITOR_USER, \
     EDITOR_PASS
 
@@ -15,10 +16,10 @@ def test_version():
 class TestRepositoryAPI(TestCase):
 
     def test_create_repository(self):
-        sparql_endpoint = tripel_store.create_repository('test')
+        sparql_endpoint = triple_store.create_repository('test')
 
     def test_drop_repository(self):
-        sparql_endpoint = tripel_store.drop_repository('test')
+        sparql_endpoint = triple_store.drop_repository('test')
 
 
 class TestRepositoryAuth(TestCase):
@@ -40,10 +41,10 @@ class TestRepositoryAuth(TestCase):
         }
     }
 
-    PUT = tripel_store.put
-    GET = tripel_store.get
-    DELETE = tripel_store.delete
-    POST = tripel_store.post
+    PUT = triple_store.put
+    GET = triple_store.get
+    DELETE = triple_store.delete
+    POST = triple_store.post
 
     METHODS = {
         'put' : PUT,
@@ -82,8 +83,8 @@ class TestRepositoryAuth(TestCase):
         },
     }
 
-    def testGet(self):
-        sparql_endpoint = tripel_store.create_repository('test')
+    def testAuth(self):
+        sparql_endpoint = triple_store.create_repository('test')
 
 
         def make_request(method, uri, actor):
@@ -103,10 +104,20 @@ class TestRepositoryAuth(TestCase):
                 for method in self.methods:
                     response = make_request(self.METHODS[method], uri, self.ACTORS[actor])
                     if actor in self.MATRIX[uri] and method in self.MATRIX[uri][actor]:
-                        if response.status_code != self.MATRIX[uri][actor][method] :
-                            a=5
                         assert response.status_code == self.MATRIX[uri][actor][method]
                     else:
-                        if response.status_code == 200:
+                        if response.status_code <=400:
                             a=5
-                        assert response.status_code != 200
+                        assert response.status_code >=400
+
+
+    def test_bulk_load(self):
+
+        sparql_endpoint = triple_store.create_repository('test5')
+        response = triple_store.rest_bulk_load_from_uri(
+            triple_store.cache_repository_uri('test5'),
+            'https://opendata.potsdam.de/api/v2/catalog/exports/ttl',
+            'application/x-turtle',
+        )
+
+        assert response.status_code == HTTPStatus.OK

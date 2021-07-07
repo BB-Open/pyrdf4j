@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Tripel store access"""
+"""Triple store access"""
+
+from http import HTTPStatus
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -7,10 +9,12 @@ from SPARQLWrapper import SPARQLWrapper2
 
 from datenadler_rdf4j.constants import RDF4J_BASE, ADMIN_PASS, ADMIN_USER
 from datenadler_rdf4j.errors import HarvestURINotReachable, \
-    TripelStoreBulkLoadError, TripelStoreCreateRepositoryError, TripelStoreDropRepositoryError
+    TripleStoreBulkLoadError, TripleStoreCreateRepositoryError, TripleStoreDropRepositoryError, \
+    TripleStoreCannotStartTransaction, TripleStoreCannotCommitTransaction, TripleStoreTerminatingError, \
+    TripleStoreCannotRollbackTransaction, TripleStoreRollbackOccurred
 
 
-class SPARQL(object):
+class SPARQL():
     """
     API to the SPARQL Endpoint of a repository
     """
@@ -32,16 +36,16 @@ class SPARQL(object):
         if results:
             return True
 
-    def insert(self, tripel):
+    def insert(self, triple):
         """
-        :param tripel:
+        :param triple:
         :return:
         """
         queryString = """INSERT DATA
            {{ GRAPH <http://example.com/> {{ {s} {p} {o} }} }}"""
 
         self.sparql.setQuery(
-            queryString.format(s=tripel.s, o=tripel.o, p=tripel.p))
+            queryString.format(s=triple.s, o=triple.o, p=triple.p))
         self.sparql.method = 'POST'
         self.sparql.query()
 
@@ -55,9 +59,87 @@ class SPARQL(object):
         return results
 
 
-class Tripelstore(object):
+
+class Transaction():
     """
-    API to the tripelstore
+    Decorator to brace a transaction around a triple store operation.
+    It is required that the repository uri is the first arg (after self) of the decorated function
+    Returns: The response to the actual triple store operation
+    Raises: Raises TripleStoreTerminatingError if a rollback was necessary
+
+    """
+
+    def __call__(self, func):
+        """
+        Do the transaction bracing
+        """
+        def wrapper(*args, **kwargs):
+            # get the self of the caller
+            caller_self = args[0]
+            # get the repo_uri as the first argument (after self)
+            repo_uri = args[1]
+            # open a transaction for the repo_uri and retrieve the transaction uri
+            transaction_uri = self.start_transaction(repo_uri)
+            # Watch for exceptions in the operation. Wrong return codes have to raise TripleStoreTerminatingError
+            # to trigger a rollback
+            try:
+                # do the actual database operation and remember the response.
+                # Notice the replacement of the repo_uri by the transaction_uri
+                response = func(caller_self, transaction_uri, *args[2:], **kwargs)
+            except TripleStoreTerminatingError as e:
+                # I case of a terminating error roll back the transaction
+                self.rollback(transaction_uri)
+                # Reraise the original error
+                raise e
+
+            # commit the transaction
+            self.commit(transaction_uri)
+
+            # Return the response to the actual database operation
+            return response
+
+        return wrapper
+
+    @staticmethod
+    def start_transaction(repo_uri):
+        # start a transaction and return the associated transaction URI
+        # returns : The transaction URI
+
+        response = requests.post(
+            repo_uri + '/transactions'
+        )
+        if response.status_code != HTTPStatus.CREATED:
+            raise TripleStoreCannotStartTransaction
+
+        return response.headers['Location']
+
+    @staticmethod
+    def commit(transcation_uri):
+        # commit a transaction and return the response status
+        response = requests.put(
+            transcation_uri + '?action=COMMIT'
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise TripleStoreCannotCommitTransaction
+
+        return response.status_code
+
+    @staticmethod
+    def rollback(transcation_uri):
+        # Rollback a transaction and return the response status
+        response = requests.delete(
+            transcation_uri + '?action=ROLLBACK'
+        )
+        if response.status_code != HTTPStatus.OK:
+            raise TripleStoreCannotRollbackTransaction
+
+        return response.status_code
+
+
+
+class Triplestore():
+    """
+    API to the triplestore
     """
 
     def __init__(self, RDF4J_base=None):
@@ -100,7 +182,7 @@ class Tripelstore(object):
 
     def rest_create_repository(self, repository_id, repository_label):
         """
-        Creates a repository in the tripelstore and registers
+        Creates a repository in the triplestore and registers
         a repository sparqlwrapper for it
         :param repository_id: Id of the repository to be created
         :param repository_label: Description of the repository to be created
@@ -138,9 +220,9 @@ class Tripelstore(object):
 
     def rest_drop_repository(self, repository_id):
         """
-        Drops a repository in the tripel store and deletes the repository sparqlwrapper of it
+        Drops a repository in the triple store and deletes the repository sparqlwrapper of it
         :param repository_id: Id of the repository to be dropped
-        :return: the response from the tripel store
+        :return: the response from the triple store
         """
         headers = {'content-type': 'application/x-turtle'}
         repo_uri = self.repository_uris[repository_id]
@@ -159,8 +241,10 @@ class Tripelstore(object):
         :param repository_id: The repository ID
         :return:
         """
+        if repository_id in self.repository_uris:
+            return self.repository_uris[repository_id]
         blaze_uri = self.RDF4J_base + \
-                    '/repositories/{}'
+                    'repositories/{}'
         blaze_uri_with_repository = blaze_uri.format(repository_id)
         self.repository_uris[repository_id] = blaze_uri_with_repository
         return blaze_uri_with_repository
@@ -174,32 +258,54 @@ class Tripelstore(object):
         if repository in self.repository_uris:
             del self.repository_uris[repository]
 
-    def rest_bulk_load_from_uri(self, repository, uri, content_type, clear_repository=False):
+    def transaction_uri(self, repository_id):
+        # start a transaction and return the associated transaction URI
+        blaze_uri_with_repository = self.cache_repository_uri(repository_id)
+
+        response = self.post(
+            blaze_uri_with_repository + '/transactions'
+        )
+        return response.headers['Location']
+
+    def commit(self, transcation_uri):
+        # commit a transaction and return the response status
+        response = self.put(
+            transcation_uri + '?action=COMMIT'
+        )
+        return response.status_code
+
+    @Transaction()
+    def rest_bulk_load_from_uri(self, repo_uri, uri, content_type, clear_repository=False, repo_label=None):
         """
-        Load the tripel_data from the harvest uri
-        and push it into the tripelstore
-        :param repository:
+        Load the triple_data from the harvest uri
+        and push it into the triplestore
+        :param repository_id:
         :param uri:
         :param content_type:
         :return:
         """
-        # Load the tripel_data from the harvest uri
+        # Load the triple_data from the harvest uri
         response = requests.get(uri)
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             raise HarvestURINotReachable(response.content)
-        tripel_data = response.content
+        triple_data = response.content
 
         if clear_repository:
-            self.empty_repository(repository)
+            self.empty_repository(repo_uri)
 
-        # push it into the tripelstore
-        blaze_uri_with_repository = self.cache_repository_uri(repository)
+        if repo_label is None:
+            repo_label = 'None'
+        self.rest_create_repository(repo_uri, repo_label)
+
         headers = {'Content-Type': content_type}
-        response = requests.post(
-            blaze_uri_with_repository,
-            data=tripel_data,
+        response = self.put(
+            repo_uri+ '?action=ADD',
+            data=triple_data,
             headers=headers,
         )
+        if response.status_code != HTTPStatus.OK:
+            raise TripleStoreTerminatingError
+
         return response
 
     def graph_from_uri(self, repository_id, uri, content_type, clear_repository=False):
@@ -216,7 +322,7 @@ class Tripelstore(object):
         if response.status_code == 200:
             return self.sparql_for_repository(repository_id), response
         else:
-            raise TripelStoreBulkLoadError(response.content)
+            raise TripleStoreBulkLoadError(response.content)
 
     def create_repository(self, repository_id, repository_label=None):
         """
@@ -230,7 +336,7 @@ class Tripelstore(object):
             return self.sparql_for_repository(repository_id)
         else:
             msg = str(response.status_code) + ': ' + str(response.content)
-            raise TripelStoreCreateRepositoryError(msg)
+            raise TripleStoreCreateRepositoryError(msg)
 
     def drop_repository(self, repository_id):
         """
@@ -242,7 +348,7 @@ class Tripelstore(object):
             return True
         else:
             msg = str(response.status_code) + ': ' + str(response.content)
-            raise TripelStoreDropRepositoryError(msg)
+            raise TripleStoreDropRepositoryError(msg)
 
 
 
@@ -266,12 +372,12 @@ class Tripelstore(object):
         }
 
         response = requests.post(source, headers=headers, data=data)
-        tripel_data = response.content
+        triple_data = response.content
 
         headers = {'Content-Type': mime_type}
         response = requests.post(
             target,
-            data=tripel_data,
+            data=triple_data,
             headers=headers,
         )
 
@@ -284,8 +390,8 @@ class Tripelstore(object):
         :return:
         """
         mime_type = 'text/turtle'
-        tripel_data = self.get_triple_data_from_query(repository, query, mime_type)
-        return tripel_data
+        triple_data = self.get_triple_data_from_query(repository, query, mime_type)
+        return triple_data
 
     def get_triple_data_from_query(self, repository, query, mime_type):
         """
@@ -303,9 +409,9 @@ class Tripelstore(object):
 
         data = {'query': query}
         response = requests.post(source, headers=headers, data=data)
-        tripel_data = response.content
+        triple_data = response.content
 
-        return tripel_data
+        return triple_data
 
     def empty_repository(self, repository):
         """
@@ -323,9 +429,9 @@ class Tripelstore(object):
 
         data = {'query': query}
         response = requests.delete(source, headers=headers, data=data)
-        tripel_data = response.content
+        triple_data = response.content
 
-        return tripel_data
+        return triple_data
 
 # ToDo make to utility
-tripel_store = Tripelstore()
+triple_store = Triplestore()

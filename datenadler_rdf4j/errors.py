@@ -4,13 +4,33 @@ class HarvestURINotReachable(Exception):
     """HarvestURINotReachable"""
 
 
-class TripelStoreBulkLoadError(Exception):
-    """TripelStoreBulkLoadError"""
+class TripleStoreBulkLoadError(Exception):
+    """TripleStoreBulkLoadError"""
 
 
-class TripelStoreCreateRepositoryError(Exception):
-    """TripelStoreCreateRepositoryError"""
+class TripleStoreCreateRepositoryError(Exception):
+    """TripleStoreCreateRepositoryError"""
 
 
-class TripelStoreDropRepositoryError(Exception):
-    """TripelStoreDropRepositoryError"""
+class TripleStoreDropRepositoryError(Exception):
+    """TripleStoreDropRepositoryError"""
+
+
+class TripleStoreCannotStartTransaction(Exception):
+    """TripleStoreCannotStartTransactionError"""
+
+
+class TripleStoreCannotCommitTransaction(Exception):
+    """TripleStoreCannotCommitTransaction"""
+
+
+class TripleStoreCannotRollbackTransaction(Exception):
+    """TripleStoreCannotRollbackTransaction"""
+
+class TripleStoreRollbackOccurred(Exception):
+    """TripleStoreRollbackOccurred"""
+
+
+class TripleStoreTerminatingError(Exception):
+    """TripleStoreTerminatingError"""
+
