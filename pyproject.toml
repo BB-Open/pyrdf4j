@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "datenadler.rdf4j"
+name = "pyrdf4j"
 version = "0.1.0"
 description = ""
 authors = ["volker <volker.jaenisch@inqbus.de>"]

@@ -31,6 +31,7 @@ class TripleStoreCannotCommitTransaction(Exception):
 class TripleStoreCannotRollbackTransaction(Exception):
     """TripleStoreCannotRollbackTransaction"""
 
+
 class TripleStoreRollbackOccurred(Exception):
     """TripleStoreRollbackOccurred"""
 
@@ -38,3 +39,6 @@ class TripleStoreRollbackOccurred(Exception):
 class TripleStoreTerminatingError(Exception):
     """TripleStoreTerminatingError"""
 
+
+class RepositoryTypeUnknown(Exception):
+    """RepositoryTypeUnknown"""

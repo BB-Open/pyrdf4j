@@ -1,0 +1,14 @@
+#
+# Sesame configuration template for a (proxy for a) remote repository
+#
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix rep: <http://www.openrdf.org/config/repository#>.
+@prefix hr: <http://www.openrdf.org/config/repository/http#>.
+
+[] a rep:Repository ;
+   rep:repositoryID "{repo_id}" ;
+   rdfs:label "{repo_label}" ;
+   rep:repositoryImpl [
+      rep:repositoryType "openrdf:HTTPRepository" ;
+      hr:repositoryURL <{Sesame_server_location}/repositories/{Remote_repository_ID}>
+   ].

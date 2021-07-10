@@ -1,14 +1,14 @@
 
 from nose.tools import assert_equal
 
-from datenadler_rdf4j import __version__
+from pyrdf4j import __version__
 
 from unittest import TestCase
 
-from datenadler_rdf4j.api import triple_store
-from datenadler_rdf4j.constants import RDF4J_BASE, ADMIN_USER, ADMIN_PASS, VIEWER_PASS, VIEWER_USER, EDITOR_USER, \
+from pyrdf4j.rdf4j import triple_store
+from pyrdf4j.constants import RDF4J_BASE, ADMIN_USER, ADMIN_PASS, VIEWER_PASS, VIEWER_USER, EDITOR_USER, \
     EDITOR_PASS
-from datenadler_rdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
+from pyrdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
 from tests.constants import ACTORS, AUTH
 
 
@@ -34,7 +34,8 @@ URIs = {
 
 QUERIES = {
     repo : {
-        'params' :"""select {?s ?p ?o}""",
+        'params' :"""select ?s ?o ?p WHERE {?s ?p ?o}""",
+        'headers' : {'content-type': 'application/sparql-query'},
     }
 }
 
@@ -52,6 +53,12 @@ MATRIX = {
         'admin' : {'get': 200,
                    'post': 500,
                    },
+        'editor': {'get': 200,
+                   'post': 500,
+                   },
+        'viewer': {'get': 200,
+                   'post': 500,
+                   }
     },
     system_dir: {
         'admin' : {'get': 400,
@@ -59,17 +66,18 @@ MATRIX = {
                    },
     },
     repo: {
-        'admin' : {'get': 404,
-                   'post': 404,
-                   'put': 500,
-                   'delete': 404,
+        'admin' : {'get': 200,
+                   'post': 200,
+                   'put': 409,
+                   'delete': 204,
                    },
-        'editor' : {'get': 404,
-                   'post': 404,
-                   'put': 500,
+        'editor' : {'get': 200,
+                   'post': 200,
+                   'put': 409,
+                   'delete': 204,
                    },
-        'viewer' : {'get': 400,
-                   'post': 404,
+        'viewer' : {'get': 200,
+                   'post': 200,
                    }
     },
 }
@@ -87,8 +95,8 @@ for path in MATRIX:
 
 class TestAUTH(TestCase):
 
-    def do_request(self, path, actor, method, expected):
-        headers = {'content-type': 'application/x-turtle'}
+    def do_request(self, path, actor, method):
+        headers = {'content-type': 'application/rdf+turtle'}
         data = None
 
         uri = URIs[path]
@@ -96,7 +104,13 @@ class TestAUTH(TestCase):
         auth = AUTH[actor]
 
         if path in QUERIES:
-            data = QUERIES[path]['params']
+            if method == 'post':
+                data = QUERIES[path]['params']
+                headers = QUERIES[path]['headers']
+            elif method == 'get':
+                data = {'query': QUERIES[path]['params']}
+                headers = QUERIES[path]['headers']
+
 
         func = METHODS[method]
 
@@ -110,7 +124,10 @@ class TestAUTH(TestCase):
     def test_request(self):
         for path, actor, method, expected in PARAMS:
             with self.subTest(path=path, actor=actor, method=method, expected=expected):
-                response = self.do_request(path, actor, method, expected)
+
+                self.setUp()
+
+                response = self.do_request(path, actor, method)
 
                 if expected is not None:
                     assert_equal(response.status_code, expected)
@@ -119,14 +136,14 @@ class TestAUTH(TestCase):
 
 
     def test_one_request(self):
-        response = self.do_request('repo', 'viewer', 'delete', None)
-        assert response.status_code >= 400
+        response = self.do_request('repo', 'viewer', 'delete')
+        assert response.status_code >= 200
 
     def setUp(self) :
         try:
-            sparql_endpoint = triple_store.create_repository('test')
+            sparql_endpoint = triple_store.create_repository('test', auth=AUTH['admin'])
         except TripleStoreCreateRepositoryAlreadyExists:
             pass
 
     def tearDown(self) :
-        sparql_endpoint = triple_store.drop_repository('test')
+        sparql_endpoint = triple_store.drop_repository('test', auth=AUTH['admin'])

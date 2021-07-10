@@ -1,5 +1,5 @@
 from requests.auth import HTTPBasicAuth
-from datenadler_rdf4j.constants import ADMIN_USER, ADMIN_PASS, VIEWER_PASS, VIEWER_USER, EDITOR_USER, \
+from pyrdf4j.constants import ADMIN_USER, ADMIN_PASS, VIEWER_PASS, VIEWER_USER, EDITOR_USER, \
     EDITOR_PASS
 
 AUTH = {

@@ -1,0 +1,22 @@
+#
+# Sesame configuration template for a native RDF repository
+#
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix rep: <http://www.openrdf.org/config/repository#>.
+@prefix sr: <http://www.openrdf.org/config/repository/sail#>.
+@prefix sail: <http://www.openrdf.org/config/sail#>.
+@prefix ns: <http://www.openrdf.org/config/sail/native#>.
+@prefix sb: <http://www.openrdf.org/config/sail/base#>.
+
+[] a rep:Repository ;
+   rep:repositoryID "{repo_id}" ;
+   rdfs:label "{repo_label}" ;
+   rep:repositoryImpl [
+      rep:repositoryType "openrdf:SailRepository" ;
+      sr:sailImpl [
+         sail:sailType "openrdf:NativeStore" ;
+            sail:iterationCacheSyncThreshold "{iterationCacheSyncThreshold}";
+            sb:evaluationStrategyFactory "{evaluationStrategyFactory}";
+            ns:tripleIndexes "{tripleIndexes}" ;
+      ]
+   ].

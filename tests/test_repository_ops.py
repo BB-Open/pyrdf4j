@@ -1,8 +1,8 @@
-from datenadler_rdf4j.api import triple_store
-from requests.auth import HTTPBasicAuth
+from pyrdf4j.rdf4j import triple_store
 from http import HTTPStatus
 from unittest import TestCase
 
+from pyrdf4j.repo_types import repo_config_factory
 from tests.constants import AUTH
 
 
@@ -12,24 +12,36 @@ class TestRepositoryCreate(TestCase):
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
 
-            triple_store.rest_drop_repository(
+            triple_store.drop_repository(
                 repo_id,
-                auth=AUTH['admin']
+                auth=AUTH['admin'],
+                accept_not_exist=True,
             )
 
     def test_create_repository(self):
         EXPECT = {
-            'viewer': None,
-            'editor': None,
+            'viewer': HTTPStatus.FORBIDDEN,
+            'editor': HTTPStatus.NO_CONTENT,
             'admin': HTTPStatus.NO_CONTENT,
           }
 
         for actor, expected in EXPECT.items():
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
+                repo_uri = triple_store.repo_id_to_uri(repo_id)
+
+                repo_label = repo_id
+
+                repo_config = repo_config_factory(
+                    'memory',
+                    repo_id=repo_id,
+                    repo_label=repo_label,
+                    )
+
+
                 response = triple_store.rest_create_repository(
-                    repo_id,
-                    'test_label_{}'.format(actor),
+                    repo_uri,
+                    repo_config,
                     auth=AUTH[actor]
                 )
                 if expected is not None:
@@ -39,29 +51,30 @@ class TestRepositoryCreate(TestCase):
 
 
 class TestRepositoryDrop(TestCase):
-
     def setUp(self):
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
-
-            triple_store.rest_create_repository(
+            triple_store.create_repository(
                 repo_id,
-                repo_id,
-                auth=AUTH['admin']
+                auth=AUTH['admin'],
+                overwrite=True,
             )
+
 
     def test_drop_repository(self):
         EXPECT = {
-            'viewer': None,
-            'editor': None,
+            'viewer': HTTPStatus.FORBIDDEN,
+            'editor': HTTPStatus.NO_CONTENT,
             'admin': HTTPStatus.NO_CONTENT,
           }
 
         for actor, expected in EXPECT.items():
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
+                repo_uri = triple_store.repo_id_to_uri(repo_id)
+
                 response = triple_store.rest_drop_repository(
-                    repo_id,
+                    repo_uri,
                     auth=AUTH[actor]
                 )
                 if expected is not None:
