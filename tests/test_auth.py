@@ -5,20 +5,21 @@ from pyrdf4j import __version__
 
 from unittest import TestCase
 
-from pyrdf4j.rdf4j import triple_store
+from pyrdf4j.rdf4j import RDF4J
 from pyrdf4j.constants import RDF4J_BASE
 from pyrdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
-from tests.constants import ACTORS, AUTH
+from tests.constants import ACTORS, AUTH, RDF4J_BASE_TEST
 
 
 def test_version():
     assert __version__ == '0.1.0'
 
+rdf4j = RDF4J(RDF4J_BASE_TEST)
 
-PUT = triple_store.put
-GET = triple_store.get
-DELETE = triple_store.delete
-POST = triple_store.post
+PUT = rdf4j.rest.put
+GET = rdf4j.rest.get
+DELETE = rdf4j.rest.delete
+POST = rdf4j.rest.post
 
 
 repos_dir = 'repos_dir'
@@ -153,9 +154,9 @@ class TestAUTH(TestCase):
 
     def setUp(self) :
         try:
-            sparql_endpoint = triple_store.create_repository('test', auth=AUTH['admin'])
+            sparql_endpoint = rdf4j.create_repository('test', auth=AUTH['admin'])
         except TripleStoreCreateRepositoryAlreadyExists:
             pass
 
     def tearDown(self) :
-        sparql_endpoint = triple_store.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])
+        sparql_endpoint = rdf4j.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])

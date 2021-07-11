@@ -1,184 +1,21 @@
-# -*- coding: utf-8 -*-
-"""Triple store access"""
-
 from http import HTTPStatus
 
 import requests
 
-
-from pyrdf4j.constants import RDF4J_BASE
-from pyrdf4j.errors import HarvestURINotReachable, \
-    TripleStoreBulkLoadError, TripleStoreCreateRepositoryError, TripleStoreDropRepositoryError, \
-    TripleStoreCannotStartTransaction, TripleStoreCannotCommitTransaction, TripleStoreTerminatingError, \
-    TripleStoreCannotRollbackTransaction, TripleStoreRollbackOccurred, TripleStoreCreateRepositoryAlreadyExists
+from pyrdf4j.errors import HarvestURINotReachable, TripleStoreTerminatingError, TripleStoreBulkLoadError, \
+    TripleStoreCreateRepositoryAlreadyExists, TripleStoreCreateRepositoryError, TripleStoreDropRepositoryError
+from pyrdf4j.rdf4j_rest import RDF4J_REST, Transaction
 from pyrdf4j.repo_types import repo_config_factory
-
-
-class Transaction():
-    """
-    Decorator to brace a transaction around a triple store operation.
-    It is required that the repository target_uri is the first arg (after self) of the decorated function
-    Returns: The response to the actual triple store operation
-    Raises: Raises TripleStoreTerminatingError if a rollback was necessary
-
-    """
-
-    def __call__(self, func):
-        """
-        Do the transaction bracing
-        """
-        def wrapper(*args, **kwargs):
-            # get the self of the caller
-            caller_self = args[0]
-            # get the repo_uri as the first argument (after self)
-            repo_id = args[1]
-            # get auth information
-            if 'auth' in kwargs:
-                auth = kwargs['auth']
-            else:
-                auth = None
-            # get the repo_uri from the repo id
-            repo_uri = caller_self.repo_id_to_uri(repo_id)
-            # open a transaction for the repo_uri and retrieve the transaction target_uri
-            transaction_uri = caller_self.start_transaction(repo_uri, auth=auth)
-            kwargs['repo_uri'] = transaction_uri
-            # Watch for exceptions in the operation. Wrong return codes have to raise TripleStoreTerminatingError
-            # to trigger a rollback
-            try:
-                # do the actual database operation and remember the response.
-                # Notice the replacement of the repo_uri by the transaction_uri
-                response = func(caller_self, *args[1:], **kwargs)
-            except TripleStoreTerminatingError as e:
-                # I case of a terminating error roll back the transaction
-                caller_self.rollback(transaction_uri, auth=auth)
-                # Reraise the original error
-                raise e
-
-            # commit the transaction
-            caller_self.commit(transaction_uri, auth=auth)
-
-            # Return the response to the actual database operation
-            return response
-
-        return wrapper
 
 
 class RDF4J:
     """
-    API to the RDF4J WebAPI
+    High level API to the RDF4J
     """
 
     def __init__(self, RDF4J_base=None):
 
-        self.repository_uris = {}
-        if RDF4J_base is not None:
-            self.RDF4J_base = RDF4J_base
-        else:
-            self.RDF4J_base = RDF4J_BASE
-
-    @staticmethod
-    def get(uri, **params):
-        """Low level GET request"""
-        response = requests.get(uri, params=params['data'], **params)
-        return response
-
-    @staticmethod
-    def post(uri, **params):
-        """Low level POST request"""
-        response = requests.post(uri, **params)
-        return response
-
-    @staticmethod
-    def put(uri, **params):
-        """Low level PUT request"""
-        response = requests.put(uri, **params)
-        return response
-
-    @staticmethod
-    def delete(uri, **params):
-        """Low level DELETE request"""
-        response = requests.delete(uri, **params)
-        return response
-
-    @staticmethod
-    def start_transaction(repo_uri, auth=None):
-        # start a transaction and return the associated transaction URI
-        # returns : The transaction URI
-
-        response = requests.post(
-            repo_uri + '/transactions',
-            auth=auth
-        )
-        if response.status_code != HTTPStatus.CREATED:
-            raise TripleStoreCannotStartTransaction
-
-        return response.headers['Location']
-
-    @staticmethod
-    def commit(transcation_uri, auth=None):
-        # commit a transaction and return the response status
-        response = requests.put(
-            transcation_uri + '?action=COMMIT',
-            auth=auth
-        )
-        if response.status_code != HTTPStatus.OK:
-            raise TripleStoreCannotCommitTransaction
-
-        return response.status_code
-
-    @staticmethod
-    def rollback(transcation_uri, auth=None):
-        # Rollback a transaction and return the response status
-        response = requests.delete(
-            transcation_uri + '?action=ROLLBACK',
-            auth=auth
-        )
-        if response.status_code != HTTPStatus.OK:
-            raise TripleStoreCannotRollbackTransaction
-
-        return response.status_code
-
-    def repo_id_to_uri(self, repo_id, repo_uri=None):
-        """Translates a repository ID into a repository URI"""
-        if repo_uri is not None:
-            return repo_uri
-        repo_uri = self.RDF4J_base + 'repositories/{}'.format(repo_id)
-        return repo_uri
-
-    def rest_create_repository(self, repo_uri, repo_config, auth=None):
-        """
-        Creates a repository in rdf4j
-        :param repo_uri: URI of repo to be created.
-        :param repo_config: Configuration of the repository as TTL resource
-        :param auth: Optional user credential in form of a HTTPBasicAuth instance (testing only)
-        :return: the response from the RDF4J server
-        """
-
-        headers = {'content-type': 'application/x-turtle'}
-        response = self.put(
-            repo_uri,
-            headers=headers,
-            data=repo_config,
-            auth=auth,
-        )
-        return response
-
-    def rest_drop_repository(self, repo_uri, auth=None):
-        """
-        Drops a repository
-        :param repo_uri: URI of repo to be dropped.
-        :param auth: (optional) authentication Instance
-        :return: the response from the triple store
-        """
-
-        headers = {'content-type': 'application/x-turtle'}
-        response = self.delete(
-            repo_uri,
-            headers=headers,
-            auth=auth,
-        )
-
-        return response
+        self.rest = RDF4J_REST(RDF4J_base)
 
     @Transaction()
     def bulk_load_from_uri(
@@ -200,7 +37,7 @@ class RDF4J:
         :return:
         """
 
-        repo_uri = self.repo_id_to_uri(repo_id, repo_uri=repo_uri)
+        repo_uri = self.rest.repo_id_to_uri(repo_id, repo_uri=repo_uri)
         # Load the triple_data from the harvest target_uri
         response = requests.get(target_uri)
         if response.status_code != HTTPStatus.OK:
@@ -221,7 +58,7 @@ class RDF4J:
             raise TripleStoreTerminatingError
 
         headers = {'Content-Type': content_type}
-        response = self.put(
+        response = self.rest.put(
             repo_uri+ '?action=ADD',
             data=triple_data,
             headers=headers,
@@ -241,10 +78,10 @@ class RDF4J:
         :return:
         """
         self.create_repository(repository_id)
-        response = self.rest_bulk_load_from_uri(
+        response = self.rest.rest_bulk_load_from_uri(
             repository_id, uri, content_type, clear_repository=clear_repository)
         if response.status_code == 200:
-            return self.sparql_for_repository(repository_id), response
+            return self.rest.sparql_for_repository(repository_id), response
         else:
             raise TripleStoreBulkLoadError(response.content)
 
@@ -267,10 +104,10 @@ class RDF4J:
             repo_label=repo_label,
             **kwargs)
 
-        repo_uri = self.repo_id_to_uri(repo_id)
+        repo_uri = self.rest.repo_id_to_uri(repo_id)
 
         try:
-            response = self.rest_create_repository(repo_uri, repo_config, auth=auth)
+            response = self.rest.rest_create_repository(repo_uri, repo_config, auth=auth)
             if response.status_code in [HTTPStatus.NO_CONTENT]:
                 return response
             elif response.status_code == HTTPStatus.CONFLICT:
@@ -282,8 +119,8 @@ class RDF4J:
 
         except TripleStoreCreateRepositoryAlreadyExists:
             if overwrite:
-                self.rest_drop_repository(repo_uri, auth=auth)
-                self.rest_create_repository(repo_uri, repo_config, auth=auth)
+                self.rest.rest_drop_repository(repo_uri, auth=auth)
+                self.rest.rest_create_repository(repo_uri, repo_config, auth=auth)
 
         return response
 
@@ -294,9 +131,9 @@ class RDF4J:
         :raises: TripleStoreDropRepositoryError if operation fails
         """
 
-        repo_uri = self.repo_id_to_uri(repo_id)
+        repo_uri = self.rest.repo_id_to_uri(repo_id)
 
-        response = self.rest_drop_repository(repo_uri, auth=auth)
+        response = self.rest.rest_drop_repository(repo_uri, auth=auth)
         if response.status_code in [HTTPStatus.NO_CONTENT]:
             return response
         elif response.status_code in [HTTPStatus.NOT_FOUND]:
@@ -352,14 +189,14 @@ class RDF4J:
         :param mime_type:
         :return:
         """
-        repo_uri = self.repo_id_to_uri(repo_id)
+        repo_uri = self.rest.repo_id_to_uri(repo_id)
 
         headers = {
             'Accept': mime_type
         }
 
         data = {'query': query}
-        response = self.post(
+        response = self.rest.post(
             repo_uri,
             headers=headers,
             data=data,
@@ -387,5 +224,3 @@ class RDF4J:
 
         return triple_data
 
-# ToDo make to utility
-triple_store = RDF4J()

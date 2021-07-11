@@ -38,7 +38,6 @@
 <role rolename="manager-gui"/>
 <user username="tomcat" password="pw0" roles="manager-gui"/>
 <user username="admin" password="pw1" roles="rdf4j-admin"/>
-<user username="editor" password="pw2" roles="rdf4j-editor"/>
 <user username="viewer" password="pw3" roles="rdf4j-viewer"/>
 
 </tomcat-users>

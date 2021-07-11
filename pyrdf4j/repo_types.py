@@ -1,5 +1,5 @@
 """
-Repository configurations templates. Like the RDF4J workbench offers.
+Repository configurations templates. Like the RDF4J_REST workbench offers.
 """
 
 from pyrdf4j.errors import RepositoryTypeUnknown
@@ -34,7 +34,7 @@ REPO_TYPES = [
 'native-spin',
 ]
 
-# Default parameter values for the templates. Please consult the RDF4J documentation on details to these parameters.
+# Default parameter values for the templates. Please consult the RDF4J_REST documentation on details to these parameters.
 DEFAULTS = {
     'persist': 'false',
     'iterationCacheSyncThreshold': 10000,
