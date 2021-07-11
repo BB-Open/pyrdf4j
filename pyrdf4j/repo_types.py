@@ -11,7 +11,6 @@ TEMPLATE_FOLDER = Path(__file__).parent / 'repo_type_templates'
 
 # The known repository types. Shamelessly stolen from RFD4J workbench
 REPO_TYPES = [
-'memory-customrule',
 'memory-rdfs-lucene',
 'memory-spin-rdfs',
 'native-lucene',
@@ -31,7 +30,6 @@ REPO_TYPES = [
 'sparql',
 'memory-rdfs-legacy',
 'memory-spin-rdfs-lucene',
-'native-customrule',
 'native-rdfs',
 'native-spin',
 ]
@@ -43,8 +41,6 @@ DEFAULTS = {
     'evaluationStrategyFactory': 'org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategyFactory',
     'syncDelay': 0,
     'tripleIndexes': 'spoc,posc',
-    'rule_query' : 'insert rule query here',
-    'matcher_query' : 'insert matcher query here',
     'queryLanguage' : 'SPARQL',
     'Sesame_server_location': 'http://example.org',
     'Remote_repository_ID': 'Test',
@@ -71,6 +67,6 @@ def repo_config_factory(repo_type, repo_id, repo_label, **kwargs):
     # Overwrite them with the given kwargs
     params.update(kwargs)
     # Fill the params in the template
-    ttl = template.format(repo_id=repo_id, repo_label=repo_label, **params)
+    ttl = template.format(repo_id=repo_id.replace('-', '_'), repo_label=repo_label, **params)
     # return the final TTL
     return ttl

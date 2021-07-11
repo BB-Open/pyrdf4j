@@ -22,9 +22,13 @@ class TestSPARQL(TestCase):
         )
         assert response.status_code == HTTPStatus.OK
 
+    def tearDown(self) :
+        sparql_endpoint = triple_store.drop_repository('test_sparql', auth=AUTH['admin'])
+
+
     def test_select_all(self):
         QUERY = """
-        SELECT ?s ?o ?p WHERE {?s ?o ?p}
+        CLEAR DEFAULT
         """
 
         response = triple_store.get_triple_data_from_query('test_sparql', QUERY, 'application/rdf+xml')

@@ -6,8 +6,7 @@ from pyrdf4j import __version__
 from unittest import TestCase
 
 from pyrdf4j.rdf4j import triple_store
-from pyrdf4j.constants import RDF4J_BASE, ADMIN_USER, ADMIN_PASS, VIEWER_PASS, VIEWER_USER, EDITOR_USER, \
-    EDITOR_PASS
+from pyrdf4j.constants import RDF4J_BASE
 from pyrdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
 from tests.constants import ACTORS, AUTH
 
@@ -25,11 +24,13 @@ POST = triple_store.post
 repos_dir = 'repos_dir'
 system_dir = 'system_dir'
 repo = 'repo'
+sparql = 'sparql'
 
 URIs = {
     repos_dir : RDF4J_BASE + 'repositories',
     system_dir : RDF4J_BASE + 'repositories/SYSTEM',
     repo : RDF4J_BASE + 'repositories/test',
+    sparql : RDF4J_BASE + 'repositories/test/statements',
 }
 
 QUERIES = {
@@ -64,6 +65,9 @@ MATRIX = {
         'admin' : {'get': 400,
                    'post': 415,
                    },
+        'viewer': {'get': 403,
+                   'post': 403,
+                   }
     },
     repo: {
         'admin' : {'get': 200,
@@ -71,13 +75,22 @@ MATRIX = {
                    'put': 409,
                    'delete': 204,
                    },
-        'editor' : {'get': 200,
+        'viewer' : {'get': 200,
                    'post': 200,
-                   'put': 409,
+                   'put': 403,
+                   'delete': 403,
+                   }
+    },
+    sparql:{
+        'admin' : {'get': 200,
+                   'post': 415,
+                   'put': 415,
                    'delete': 204,
                    },
         'viewer' : {'get': 200,
-                   'post': 200,
+                   'post': 415,
+                   'put': 403,
+                   'delete': 403,
                    }
     },
 }
@@ -134,7 +147,6 @@ class TestAUTH(TestCase):
                 else:
                     assert response.status_code >= 400
 
-
     def test_one_request(self):
         response = self.do_request('repo', 'viewer', 'delete')
         assert response.status_code >= 200
@@ -146,4 +158,4 @@ class TestAUTH(TestCase):
             pass
 
     def tearDown(self) :
-        sparql_endpoint = triple_store.drop_repository('test', auth=AUTH['admin'])
+        sparql_endpoint = triple_store.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])

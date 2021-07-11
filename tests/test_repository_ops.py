@@ -18,10 +18,15 @@ class TestRepositoryCreate(TestCase):
                 accept_not_exist=True,
             )
 
+    def tearDown(self) :
+        for actor in AUTH:
+            repo_id = 'test_{}'.format(actor)
+            sparql_endpoint = triple_store.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
+
+
     def test_create_repository(self):
         EXPECT = {
             'viewer': HTTPStatus.FORBIDDEN,
-            'editor': HTTPStatus.NO_CONTENT,
             'admin': HTTPStatus.NO_CONTENT,
           }
 
@@ -60,11 +65,15 @@ class TestRepositoryDrop(TestCase):
                 overwrite=True,
             )
 
+    def tearDown(self) :
+        for actor in AUTH:
+            repo_id = 'test_{}'.format(actor)
+            sparql_endpoint = triple_store.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
+
 
     def test_drop_repository(self):
         EXPECT = {
             'viewer': HTTPStatus.FORBIDDEN,
-            'editor': HTTPStatus.NO_CONTENT,
             'admin': HTTPStatus.NO_CONTENT,
           }
 
