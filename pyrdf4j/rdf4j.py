@@ -107,7 +107,7 @@ class RDF4J:
         repo_uri = self.rest.repo_id_to_uri(repo_id)
 
         try:
-            response = self.rest.rest_create_repository(repo_uri, repo_config, auth=auth)
+            response = self.rest.create_repository(repo_uri, repo_config, auth=auth)
             if response.status_code in [HTTPStatus.NO_CONTENT]:
                 return response
             elif response.status_code == HTTPStatus.CONFLICT:
@@ -119,8 +119,8 @@ class RDF4J:
 
         except TripleStoreCreateRepositoryAlreadyExists:
             if overwrite:
-                self.rest.rest_drop_repository(repo_uri, auth=auth)
-                self.rest.rest_create_repository(repo_uri, repo_config, auth=auth)
+                self.rest.drop_repository(repo_uri, auth=auth)
+                self.rest.create_repository(repo_uri, repo_config, auth=auth)
 
         return response
 
@@ -133,7 +133,7 @@ class RDF4J:
 
         repo_uri = self.rest.repo_id_to_uri(repo_id)
 
-        response = self.rest.rest_drop_repository(repo_uri, auth=auth)
+        response = self.rest.drop_repository(repo_uri, auth=auth)
         if response.status_code in [HTTPStatus.NO_CONTENT]:
             return response
         elif response.status_code in [HTTPStatus.NOT_FOUND]:

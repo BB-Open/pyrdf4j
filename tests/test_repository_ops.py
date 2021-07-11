@@ -45,7 +45,7 @@ class TestRepositoryCreate(TestCase):
                     )
 
 
-                response = self.rdf4j.rest.rest_create_repository(
+                response = self.rdf4j.rest.create_repository(
                     repo_uri,
                     repo_config,
                     auth=AUTH[actor]
@@ -84,7 +84,7 @@ class TestRepositoryDrop(TestCase):
                 repo_id = 'test_{}'.format(actor)
                 repo_uri = self.rdf4j.rest.repo_id_to_uri(repo_id)
 
-                response = self.rdf4j.rest.rest_drop_repository(
+                response = self.rdf4j.rest.drop_repository(
                     repo_uri,
                     auth=AUTH[actor]
                 )

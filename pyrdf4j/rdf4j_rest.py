@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Triple store access"""
+"""RDF4J Rest-API access"""
 
 from http import HTTPStatus
 
 import requests
-
 
 from pyrdf4j.constants import RDF4J_BASE
 from pyrdf4j.errors import TripleStoreCannotStartTransaction, TripleStoreCannotCommitTransaction, TripleStoreTerminatingError, \
@@ -142,7 +141,7 @@ class RDF4J_REST:
         repo_uri = self.RDF4J_base + 'repositories/{}'.format(repo_id)
         return repo_uri
 
-    def rest_create_repository(self, repo_uri, repo_config, auth=None):
+    def create_repository(self, repo_uri, repo_config, auth=None):
         """
         Creates a repository in rdf4j
         :param repo_uri: URI of repo to be created.
@@ -160,7 +159,7 @@ class RDF4J_REST:
         )
         return response
 
-    def rest_drop_repository(self, repo_uri, auth=None):
+    def drop_repository(self, repo_uri, auth=None):
         """
         Drops a repository
         :param repo_uri: URI of repo to be dropped.
