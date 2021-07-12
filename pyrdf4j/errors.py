@@ -1,44 +1,48 @@
 """Error Api"""
 
-class HarvestURINotReachable(Exception):
-    """HarvestURINotReachable"""
+class URINotReachable(Exception):
+    """URINotReachable"""
 
 
-class TripleStoreBulkLoadError(Exception):
-    """TripleStoreBulkLoadError"""
+class BulkLoadError(Exception):
+    """BulkLoadError"""
 
 
-class TripleStoreCreateRepositoryError(Exception):
-    """TripleStoreCreateRepositoryError"""
+class CreateRepositoryError(Exception):
+    """CreateRepositoryError"""
 
 
-class TripleStoreCreateRepositoryAlreadyExists(Exception):
-    """TripleStoreCreateRepositoryAlreadyExists"""
+class CreateRepositoryAlreadyExists(Exception):
+    """CreateRepositoryAlreadyExists"""
 
 
-class TripleStoreDropRepositoryError(Exception):
-    """TripleStoreDropRepositoryError"""
+class DropRepositoryError(Exception):
+    """DropRepositoryError"""
 
 
-class TripleStoreCannotStartTransaction(Exception):
-    """TripleStoreCannotStartTransactionError"""
+class CannotStartTransaction(Exception):
+    """CannotStartTransactionError"""
 
 
-class TripleStoreCannotCommitTransaction(Exception):
-    """TripleStoreCannotCommitTransaction"""
+class CannotCommitTransaction(Exception):
+    """CannotCommitTransaction"""
 
 
-class TripleStoreCannotRollbackTransaction(Exception):
-    """TripleStoreCannotRollbackTransaction"""
+class CannotRollbackTransaction(Exception):
+    """CannotRollbackTransaction"""
 
 
-class TripleStoreRollbackOccurred(Exception):
-    """TripleStoreRollbackOccurred"""
+class RollbackOccurred(Exception):
+    """RollbackOccurred"""
 
 
-class TripleStoreTerminatingError(Exception):
-    """TripleStoreTerminatingError"""
+class TerminatingError(Exception):
+    """TerminatingError"""
 
 
 class RepositoryTypeUnknown(Exception):
     """RepositoryTypeUnknown"""
+
+
+class QueryFailed(Exception):
+    """QueryFailed"""

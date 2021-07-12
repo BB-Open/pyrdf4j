@@ -3,7 +3,7 @@ from http import HTTPStatus
 
 from unittest import TestCase
 
-from pyrdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
+from pyrdf4j.errors import CreateRepositoryAlreadyExists
 from tests.constants import AUTH, RDF4J_BASE_TEST
 
 
@@ -26,7 +26,7 @@ class TestRDFLoading(TestCase):
 
         try:
             self.rdf4j.create_repository('test_bulk_load', auth=AUTH['admin'])
-        except TripleStoreCreateRepositoryAlreadyExists:
+        except CreateRepositoryAlreadyExists:
             pass
         response = self.rdf4j.bulk_load_from_uri(
             'test_bulk_load',

@@ -11,3 +11,6 @@ EDITOR_PASS = 'pw2'
 VIEWER_USER = 'viewer'
 VIEWER_PASS = 'pw3'
 
+DEFAULT_QUERY_MIME_TYPE = 'application/sparql-query'
+DEFAULT_QUERY_RESPONSE_MIME_TYPE = 'application/sparql-results+xml'
+DEFAULT_CONTENT_TYPE = 'application/x-turtle'

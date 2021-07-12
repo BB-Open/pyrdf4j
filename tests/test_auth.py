@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from pyrdf4j.rdf4j import RDF4J
 from pyrdf4j.constants import RDF4J_BASE
-from pyrdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
+from pyrdf4j.errors import CreateRepositoryAlreadyExists
 from tests.constants import ACTORS, AUTH, RDF4J_BASE_TEST
 
 
@@ -155,7 +155,7 @@ class TestAUTH(TestCase):
     def setUp(self) :
         try:
             sparql_endpoint = rdf4j.create_repository('test', auth=AUTH['admin'])
-        except TripleStoreCreateRepositoryAlreadyExists:
+        except CreateRepositoryAlreadyExists:
             pass
 
     def tearDown(self) :

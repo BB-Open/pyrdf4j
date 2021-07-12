@@ -2,8 +2,8 @@ from http import HTTPStatus
 
 import requests
 
-from pyrdf4j.errors import HarvestURINotReachable, TripleStoreTerminatingError, TripleStoreBulkLoadError, \
-    TripleStoreCreateRepositoryAlreadyExists, TripleStoreCreateRepositoryError, TripleStoreDropRepositoryError
+from pyrdf4j.errors import URINotReachable, TerminatingError, BulkLoadError, \
+    CreateRepositoryAlreadyExists, CreateRepositoryError, DropRepositoryError
 from pyrdf4j.rdf4j_rest import RDF4J_REST, Transaction
 from pyrdf4j.repo_types import repo_config_factory
 
@@ -41,7 +41,7 @@ class RDF4J:
         # Load the triple_data from the harvest target_uri
         response = requests.get(target_uri)
         if response.status_code != HTTPStatus.OK:
-            raise HarvestURINotReachable(response.content)
+            raise URINotReachable(response.content)
         triple_data = response.content
 
         if clear_repository:
@@ -55,7 +55,7 @@ class RDF4J:
             if b'REPOSITORY EXISTS' in response.content:
                 pass
         elif response.status_code != HTTPStatus.OK:
-            raise TripleStoreTerminatingError
+            raise TerminatingError
 
         headers = {'Content-Type': content_type}
         response = self.rest.put(
@@ -65,7 +65,7 @@ class RDF4J:
             auth=auth,
         )
         if response.status_code != HTTPStatus.OK:
-            raise TripleStoreTerminatingError
+            raise TerminatingError
 
         return response
 
@@ -83,7 +83,7 @@ class RDF4J:
         if response.status_code == 200:
             return self.rest.sparql_for_repository(repository_id), response
         else:
-            raise TripleStoreBulkLoadError(response.content)
+            raise BulkLoadError(response.content)
 
     def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False, **kwargs):
         """
@@ -112,12 +112,12 @@ class RDF4J:
                 return response
             elif response.status_code == HTTPStatus.CONFLICT:
                 msg = str(response.status_code) + ': ' + str(response.content)
-                raise TripleStoreCreateRepositoryAlreadyExists(msg)
+                raise CreateRepositoryAlreadyExists(msg)
             else:
                 msg = str(response.status_code) + ': ' + str(response.content)
-                raise TripleStoreCreateRepositoryError(msg)
+                raise CreateRepositoryError(msg)
 
-        except TripleStoreCreateRepositoryAlreadyExists:
+        except CreateRepositoryAlreadyExists:
             if overwrite:
                 self.rest.drop_repository(repo_uri, auth=auth)
                 self.rest.create_repository(repo_uri, repo_config, auth=auth)
@@ -128,7 +128,7 @@ class RDF4J:
         """
         :param repo_id: ID of the repository to drop
         :return: response
-        :raises: TripleStoreDropRepositoryError if operation fails
+        :raises: DropRepositoryError if operation fails
         """
 
         repo_uri = self.rest.repo_id_to_uri(repo_id)
@@ -140,7 +140,7 @@ class RDF4J:
             if accept_not_exist:
                 return response
         msg = str(response.status_code) + ': ' + str(response.content)
-        raise TripleStoreDropRepositoryError(msg)
+        raise DropRepositoryError(msg)
 
 
     def move_data_between_repositorys(self, target_repository, source_repository):
@@ -182,7 +182,7 @@ class RDF4J:
         triple_data = self.get_triple_data_from_query(repo_id, query, mime_type, auth=auth)
         return triple_data
 
-    def get_triple_data_from_query(self, repo_id, query, mime_type, auth=None):
+    def get_triple_data_from_query(self, repo_id, query, response_type=None, auth=None):
         """
         :param repo_id:
         :param query:
@@ -191,19 +191,7 @@ class RDF4J:
         """
         repo_uri = self.rest.repo_id_to_uri(repo_id)
 
-        headers = {
-            'Accept': mime_type
-        }
-
-        data = {'query': query}
-        response = self.rest.post(
-            repo_uri,
-            headers=headers,
-            data=data,
-            auth=auth)
-        triple_data = response.content
-
-        return triple_data
+        self.rest.query_repository(repo_uri, query, response_type=response_type, auth=auth)
 
     def empty_repository(self, repository, auth=None):
         """

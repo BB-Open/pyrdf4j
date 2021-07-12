@@ -5,9 +5,10 @@ from http import HTTPStatus
 
 import requests
 
-from pyrdf4j.constants import RDF4J_BASE
-from pyrdf4j.errors import TripleStoreCannotStartTransaction, TripleStoreCannotCommitTransaction, TripleStoreTerminatingError, \
-    TripleStoreCannotRollbackTransaction
+from pyrdf4j.constants import RDF4J_BASE, DEFAULT_CONTENT_TYPE, DEFAULT_QUERY_MIME_TYPE, \
+    DEFAULT_QUERY_RESPONSE_MIME_TYPE
+from pyrdf4j.errors import CannotStartTransaction, CannotCommitTransaction, TerminatingError, \
+    CannotRollbackTransaction, QueryFailed
 
 
 class Transaction():
@@ -15,7 +16,7 @@ class Transaction():
     Decorator to brace a transaction around a triple store operation.
     It is required that the repository target_uri is the first arg (after self) of the decorated function
     Returns: The response to the actual triple store operation
-    Raises: Raises TripleStoreTerminatingError if a rollback was necessary
+    Raises: Raises TerminatingError if a rollback was necessary
 
     """
 
@@ -38,13 +39,13 @@ class Transaction():
             # open a transaction for the repo_uri and retrieve the transaction target_uri
             transaction_uri = caller_self.rest.start_transaction(repo_uri, auth=auth)
             kwargs['repo_uri'] = transaction_uri
-            # Watch for exceptions in the operation. Wrong return codes have to raise TripleStoreTerminatingError
+            # Watch for exceptions in the operation. Wrong return codes have to raise TerminatingError
             # to trigger a rollback
             try:
                 # do the actual database operation and remember the response.
                 # Notice the replacement of the repo_uri by the transaction_uri
                 response = func(caller_self, *args[1:], **kwargs)
-            except TripleStoreTerminatingError as e:
+            except TerminatingError as e:
                 # I case of a terminating error roll back the transaction
                 caller_self.rollback(transaction_uri, auth=auth)
                 # Reraise the original error
@@ -106,7 +107,7 @@ class RDF4J_REST:
             auth=auth
         )
         if response.status_code != HTTPStatus.CREATED:
-            raise TripleStoreCannotStartTransaction
+            raise CannotStartTransaction
 
         return response.headers['Location']
 
@@ -118,7 +119,7 @@ class RDF4J_REST:
             auth=auth
         )
         if response.status_code != HTTPStatus.OK:
-            raise TripleStoreCannotCommitTransaction
+            raise CannotCommitTransaction
 
         return response.status_code
 
@@ -130,7 +131,7 @@ class RDF4J_REST:
             auth=auth
         )
         if response.status_code != HTTPStatus.OK:
-            raise TripleStoreCannotRollbackTransaction
+            raise CannotRollbackTransaction
 
         return response.status_code
 
@@ -175,3 +176,29 @@ class RDF4J_REST:
         )
 
         return response
+
+    def query_repository(self, repo_uri, query, query_type=None, response_type=None, auth=None):
+
+        if query_type is None:
+            query_type = DEFAULT_QUERY_MIME_TYPE
+
+        if response_type is None:
+            response_type = DEFAULT_QUERY_RESPONSE_MIME_TYPE
+
+        headers = {
+            'Accept': response_type,
+            'content-type': query_type,
+        }
+
+        response = self.post(
+            repo_uri,
+            data=query,
+            headers=headers,
+            auth=auth,
+        )
+
+        if response.status_code in [HTTPStatus.OK]:
+            triple_data = response.content
+            return triple_data
+        else:
+            raise QueryFailed(query)

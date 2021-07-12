@@ -1,4 +1,4 @@
-from pyrdf4j.errors import TripleStoreCreateRepositoryError
+from pyrdf4j.errors import CreateRepositoryError
 from unittest import TestCase
 
 from pyrdf4j.rdf4j import RDF4J
@@ -7,8 +7,8 @@ from tests.constants import AUTH, RDF4J_BASE_TEST
 
 # The custom rules are no parameters, so there cannot set a good default value. So we expect these cases to raise.
 EXPECT_RAISE = {
-    'memory-customrule': TripleStoreCreateRepositoryError,
-    'native-customrule': TripleStoreCreateRepositoryError,
+    'memory-customrule': CreateRepositoryError,
+    'native-customrule': CreateRepositoryError,
 }
 
 

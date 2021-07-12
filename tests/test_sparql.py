@@ -2,7 +2,7 @@ from pyrdf4j.rdf4j import RDF4J
 from http import HTTPStatus
 from unittest import TestCase
 
-from pyrdf4j.errors import TripleStoreCreateRepositoryAlreadyExists
+from pyrdf4j.errors import CreateRepositoryAlreadyExists
 from tests.constants import AUTH, RDF4J_BASE_TEST
 
 
@@ -12,7 +12,7 @@ class TestSPARQL(TestCase):
         self.rdf4j = RDF4J(RDF4J_BASE_TEST)
         try:
             self.rdf4j.create_repository('test_sparql', auth=AUTH['admin'])
-        except TripleStoreCreateRepositoryAlreadyExists:
+        except CreateRepositoryAlreadyExists:
             pass
 
         response = self.rdf4j.bulk_load_from_uri(
@@ -28,6 +28,10 @@ class TestSPARQL(TestCase):
 
     def test_select_all(self):
         QUERY = """
-        CLEAR DEFAULT
+        SELECT ?s ?o ?p WHERE {?s ?o ?p}
         """
-        response = self.rdf4j.get_triple_data_from_query('test_sparql', QUERY, 'application/rdf+xml')
+        response = self.rdf4j.get_triple_data_from_query(
+            'test_sparql',
+            QUERY,
+            auth=AUTH['viewer'],
+        )
