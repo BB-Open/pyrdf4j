@@ -14,7 +14,7 @@ EXPECT_RAISE = {
 
 class TestRepoTypes(TestCase):
     def setUp(self):
-        self.rdf4j = RDF4J(RDF4J_BASE_TEST)
+        self.rdf4j = RDF4J(rdf4j_base=RDF4J_BASE_TEST)
 
     def test_repo_types(self):
         for repo_type in REPO_TYPES:

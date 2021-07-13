@@ -1,5 +1,5 @@
 #
-# RDF4J_REST configuration template for a main-memory repository with
+# Server configuration template for a main-memory repository with
 # RDF Schema inferencing and Lucene index
 #
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.

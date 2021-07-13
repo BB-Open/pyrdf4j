@@ -2,9 +2,10 @@ from http import HTTPStatus
 
 import requests
 
+from pyrdf4j.api_repo import APIRepo
 from pyrdf4j.errors import URINotReachable, TerminatingError, BulkLoadError, \
     CreateRepositoryAlreadyExists, CreateRepositoryError, DropRepositoryError
-from pyrdf4j.rdf4j_rest import RDF4J_REST, Transaction
+from pyrdf4j.server import Server, Transaction
 from pyrdf4j.repo_types import repo_config_factory
 
 
@@ -13,9 +14,10 @@ class RDF4J:
     High level API to the RDF4J
     """
 
-    def __init__(self, RDF4J_base=None):
+    def __init__(self, rdf4j_base=None, api=APIRepo):
 
-        self.rest = RDF4J_REST(RDF4J_base)
+        self.server = Server(rdf4j_base)
+        self.api = api(self.server)
 
     @Transaction()
     def bulk_load_from_uri(
@@ -37,7 +39,7 @@ class RDF4J:
         :return:
         """
 
-        repo_uri = self.rest.repo_id_to_uri(repo_id, repo_uri=repo_uri)
+        repo_uri = self.server.repo_id_to_uri(repo_id, repo_uri=repo_uri)
         # Load the triple_data from the harvest target_uri
         response = requests.get(target_uri)
         if response.status_code != HTTPStatus.OK:
@@ -58,7 +60,7 @@ class RDF4J:
             raise TerminatingError
 
         headers = {'Content-Type': content_type}
-        response = self.rest.put(
+        response = self.server.put(
             repo_uri+ '?action=ADD',
             data=triple_data,
             headers=headers,
@@ -78,20 +80,20 @@ class RDF4J:
         :return:
         """
         self.create_repository(repository_id)
-        response = self.rest.rest_bulk_load_from_uri(
+        response = self.server.rest_bulk_load_from_uri(
             repository_id, uri, content_type, clear_repository=clear_repository)
         if response.status_code == 200:
-            return self.rest.sparql_for_repository(repository_id), response
+            return self.server.sparql_for_repository(repository_id), response
         else:
             raise BulkLoadError(response.content)
 
     def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False, **kwargs):
         """
         :param repo_id: ID of the repository to create
-        :param repo_type: (Optional) Configuration template type name of the repo (see repo_types.py)
+        :param repo_type: (Optional) Configuration template type name of the server (see repo_types.py)
         :param repo_label: (Optional) Label for the repository
         :param auth: (Optional) user credentials for authentication in form of a HTTPBasicAuth instance (testing only)
-        :param overwrite: (Optional) If overwrite is enabled an existing repo will be overwritten (testing only). Use with care!
+        :param overwrite: (Optional) If overwrite is enabled an existing server will be overwritten (testing only). Use with care!
         :param kwargs: Parameters for the Configuration template
         :return:
         """
@@ -104,10 +106,10 @@ class RDF4J:
             repo_label=repo_label,
             **kwargs)
 
-        repo_uri = self.rest.repo_id_to_uri(repo_id)
+        repo_uri = self.server.repo_id_to_uri(repo_id)
 
         try:
-            response = self.rest.create_repository(repo_uri, repo_config, auth=auth)
+            response = self.api.create_repository(repo_uri, repo_config, auth=auth)
             if response.status_code in [HTTPStatus.NO_CONTENT]:
                 return response
             elif response.status_code == HTTPStatus.CONFLICT:
@@ -119,8 +121,8 @@ class RDF4J:
 
         except CreateRepositoryAlreadyExists:
             if overwrite:
-                self.rest.drop_repository(repo_uri, auth=auth)
-                self.rest.create_repository(repo_uri, repo_config, auth=auth)
+                self.api.drop_repository(repo_uri, auth=auth)
+                self.api.create_repository(repo_uri, repo_config, auth=auth)
 
         return response
 
@@ -131,9 +133,9 @@ class RDF4J:
         :raises: DropRepositoryError if operation fails
         """
 
-        repo_uri = self.rest.repo_id_to_uri(repo_id)
+        repo_uri = self.server.repo_id_to_uri(repo_id)
 
-        response = self.rest.drop_repository(repo_uri, auth=auth)
+        response = self.api.drop_repository(repo_uri, auth=auth)
         if response.status_code in [HTTPStatus.NO_CONTENT]:
             return response
         elif response.status_code in [HTTPStatus.NOT_FOUND]:
@@ -189,9 +191,9 @@ class RDF4J:
         :param mime_type:
         :return:
         """
-        repo_uri = self.rest.repo_id_to_uri(repo_id)
+        repo_uri = self.server.repo_id_to_uri(repo_id)
 
-        self.rest.query_repository(repo_uri, query, response_type=response_type, auth=auth)
+        return self.api.query_repository(repo_uri, query, response_type=response_type, auth=auth)
 
     def empty_repository(self, repository, auth=None):
         """

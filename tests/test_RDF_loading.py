@@ -20,10 +20,7 @@ class TestRDFLoading(TestCase):
     def tearDown(self) :
         sparql_endpoint = self.rdf4j.drop_repository('test_bulk_load', auth=AUTH['admin'])
 
-
     def test_bulk_load(self):
-
-
         try:
             self.rdf4j.create_repository('test_bulk_load', auth=AUTH['admin'])
         except CreateRepositoryAlreadyExists:

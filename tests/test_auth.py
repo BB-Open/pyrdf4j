@@ -16,15 +16,15 @@ def test_version():
 
 rdf4j = RDF4J(RDF4J_BASE_TEST)
 
-PUT = rdf4j.rest.put
-GET = rdf4j.rest.get
-DELETE = rdf4j.rest.delete
-POST = rdf4j.rest.post
+PUT = rdf4j.server.put
+GET = rdf4j.server.get
+DELETE = rdf4j.server.delete
+POST = rdf4j.server.post
 
 
 repos_dir = 'repos_dir'
 system_dir = 'system_dir'
-repo = 'repo'
+repo = 'server'
 sparql = 'sparql'
 
 URIs = {
@@ -76,7 +76,12 @@ MATRIX = {
                    'put': 409,
                    'delete': 204,
                    },
-        'viewer' : {'get': 200,
+        'editor' : {'get': 200,
+                   'post': 200,
+                   'put': 403,
+                   'delete': 403,
+                   },
+        'viewer': {'get': 200,
                    'post': 200,
                    'put': 403,
                    'delete': 403,
@@ -87,6 +92,11 @@ MATRIX = {
                    'post': 415,
                    'put': 415,
                    'delete': 204,
+                   },
+        'editor' : {'get': 200,
+                   'post': 415,
+                   'put': 403,
+                   'delete': 403,
                    },
         'viewer' : {'get': 200,
                    'post': 415,
@@ -149,7 +159,7 @@ class TestAUTH(TestCase):
                     assert response.status_code >= 400
 
     def test_one_request(self):
-        response = self.do_request('repo', 'viewer', 'delete')
+        response = self.do_request('server', 'viewer', 'delete')
         assert response.status_code >= 200
 
     def setUp(self) :

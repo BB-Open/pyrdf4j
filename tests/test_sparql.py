@@ -35,3 +35,4 @@ class TestSPARQL(TestCase):
             QUERY,
             auth=AUTH['viewer'],
         )
+        pass

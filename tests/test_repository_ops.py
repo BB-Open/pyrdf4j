@@ -9,7 +9,7 @@ from tests.constants import AUTH, RDF4J_BASE_TEST
 class TestRepositoryCreate(TestCase):
 
     def setUp(self):
-        self.rdf4j = RDF4J(RDF4J_BASE_TEST)
+        self.rdf4j = RDF4J(rdf4j_base=RDF4J_BASE_TEST)
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
 
@@ -24,7 +24,6 @@ class TestRepositoryCreate(TestCase):
             repo_id = 'test_{}'.format(actor)
             sparql_endpoint = self.rdf4j.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
 
-
     def test_create_repository(self):
         EXPECT = {
             'viewer': HTTPStatus.FORBIDDEN,
@@ -34,7 +33,7 @@ class TestRepositoryCreate(TestCase):
         for actor, expected in EXPECT.items():
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
-                repo_uri = self.rdf4j.rest.repo_id_to_uri(repo_id)
+                repo_uri = self.rdf4j.server.repo_id_to_uri(repo_id)
 
                 repo_label = repo_id
 
@@ -44,8 +43,7 @@ class TestRepositoryCreate(TestCase):
                     repo_label=repo_label,
                     )
 
-
-                response = self.rdf4j.rest.create_repository(
+                response = self.rdf4j.api.create_repository(
                     repo_uri,
                     repo_config,
                     auth=AUTH[actor]
@@ -58,7 +56,7 @@ class TestRepositoryCreate(TestCase):
 
 class TestRepositoryDrop(TestCase):
     def setUp(self):
-        self.rdf4j = RDF4J(RDF4J_BASE_TEST)
+        self.rdf4j = RDF4J(rdf4j_base=RDF4J_BASE_TEST)
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
             self.rdf4j.create_repository(
@@ -72,7 +70,6 @@ class TestRepositoryDrop(TestCase):
             repo_id = 'test_{}'.format(actor)
             sparql_endpoint = self.rdf4j.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
 
-
     def test_drop_repository(self):
         EXPECT = {
             'viewer': HTTPStatus.FORBIDDEN,
@@ -82,9 +79,9 @@ class TestRepositoryDrop(TestCase):
         for actor, expected in EXPECT.items():
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
-                repo_uri = self.rdf4j.rest.repo_id_to_uri(repo_id)
+                repo_uri = self.rdf4j.server.repo_id_to_uri(repo_id)
 
-                response = self.rdf4j.rest.drop_repository(
+                response = self.rdf4j.api.drop_repository(
                     repo_uri,
                     auth=AUTH[actor]
                 )

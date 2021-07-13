@@ -1,5 +1,5 @@
 """
-Repository configurations templates. Like the RDF4J_REST workbench offers.
+Repository configurations templates. Like the Server workbench offers.
 """
 
 from pyrdf4j.errors import RepositoryTypeUnknown
@@ -11,30 +11,32 @@ TEMPLATE_FOLDER = Path(__file__).parent / 'repo_type_templates'
 
 # The known repository types. Shamelessly stolen from RFD4J workbench
 REPO_TYPES = [
-'memory-rdfs-lucene',
-'memory-spin-rdfs',
-'native-lucene',
-'native-shacl',
-'native',
-'memory-lucene',
-'memory-rdfs',
-'memory-spin',
-'native-rdfs-dt',
-'native-spin-rdfs-lucene',
-'remote',
-'memory-rdfs-dt',
-'memory-shacl',
-'memory',
-'native-rdfs-lucene',
-'native-spin-rdfs',
-'sparql',
-'memory-rdfs-legacy',
-'memory-spin-rdfs-lucene',
-'native-rdfs',
-'native-spin',
+    'memory',
+    'memory-rdfs-lucene',
+    'memory-spin-rdfs',
+    'native-lucene',
+    'native-shacl',
+    'native',
+    'memory-lucene',
+    'memory-rdfs',
+    'memory-spin',
+    'native-rdfs-dt',
+    'native-spin-rdfs-lucene',
+    'remote',
+    'memory-rdfs-dt',
+    'memory-shacl',
+    'memory',
+    'native-rdfs-lucene',
+    'native-spin-rdfs',
+    'sparql',
+    'memory-rdfs-legacy',
+    'memory-spin-rdfs-lucene',
+    'native-rdfs',
+    'native-spin',
 ]
 
-# Default parameter values for the templates. Please consult the RDF4J_REST documentation on details to these parameters.
+
+# Default parameter values for the templates. Please consult the Server documentation on details to these parameters.
 DEFAULTS = {
     'persist': 'false',
     'iterationCacheSyncThreshold': 10000,
@@ -46,6 +48,8 @@ DEFAULTS = {
     'Remote_repository_ID': 'Test',
     'SPARQL_query_endpoint': 'http://example.org',
     'SPARQL_update_endpoint': 'http://example.org',
+    'rule_query': 'This is bogus',
+    'matcher_query': 'This is bogus',
 }
 
 
