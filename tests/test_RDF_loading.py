@@ -12,19 +12,16 @@ class TestRDFLoading(TestCase):
     def setUp(self):
         self.rdf4j = RDF4J(RDF4J_BASE_TEST) 
         
-        try:
-            self.rdf4j.drop_repository('test_bulk_load')
-        except :
-            pass
+        self.rdf4j.drop_repository('test_bulk_load', accept_not_exist=True, auth=AUTH['admin'])
 
     def tearDown(self) :
         sparql_endpoint = self.rdf4j.drop_repository('test_bulk_load', auth=AUTH['admin'])
 
     def test_bulk_load(self):
-        try:
-            self.rdf4j.create_repository('test_bulk_load', auth=AUTH['admin'])
-        except CreateRepositoryAlreadyExists:
-            pass
+#        try:
+#            self.rdf4j.create_repository('test_bulk_load', auth=AUTH['admin'])
+#        except CreateRepositoryAlreadyExists:
+#            pass
         response = self.rdf4j.bulk_load_from_uri(
             'test_bulk_load',
             'https://opendata.potsdam.de/api/v2/catalog/exports/ttl',

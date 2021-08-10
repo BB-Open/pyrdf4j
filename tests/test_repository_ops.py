@@ -33,7 +33,6 @@ class TestRepositoryCreate(TestCase):
         for actor, expected in EXPECT.items():
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
-                repo_uri = self.rdf4j.server.repo_id_to_uri(repo_id)
 
                 repo_label = repo_id
 
@@ -44,7 +43,7 @@ class TestRepositoryCreate(TestCase):
                     )
 
                 response = self.rdf4j.api.create_repository(
-                    repo_uri,
+                    repo_id,
                     repo_config,
                     auth=AUTH[actor]
                 )
@@ -79,10 +78,9 @@ class TestRepositoryDrop(TestCase):
         for actor, expected in EXPECT.items():
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
-                repo_uri = self.rdf4j.server.repo_id_to_uri(repo_id)
 
                 response = self.rdf4j.api.drop_repository(
-                    repo_uri,
+                    repo_id,
                     auth=AUTH[actor]
                 )
                 if expected is not None:

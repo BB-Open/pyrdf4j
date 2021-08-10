@@ -1,3 +1,5 @@
+from pyrdf4j.api_graph import APIGraph
+from pyrdf4j.api_repo import APIRepo
 from pyrdf4j.rdf4j import RDF4J
 from http import HTTPStatus
 from unittest import TestCase
@@ -30,9 +32,15 @@ class TestSPARQL(TestCase):
         QUERY = """
         SELECT ?s ?o ?p WHERE {?s ?o ?p}
         """
-        response = self.rdf4j.get_triple_data_from_query(
-            'test_sparql',
-            QUERY,
-            auth=AUTH['viewer'],
-        )
-        pass
+#        for api in [APIGraph, APIRepo]:
+        for api in [APIGraph]:
+            with self.subTest(api=api.__name__):
+                db = RDF4J(api=api, rdf4j_base=RDF4J_BASE_TEST)
+                try:
+                    response = db.get_triple_data_from_query(
+                        'test_sparql',
+                        QUERY,
+                        auth=AUTH['viewer'],
+                    )
+                except Exception:
+                    pass
