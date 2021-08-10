@@ -35,7 +35,7 @@ class Transaction():
             else:
                 auth = None
             # get the repo_uri from the server id
-            repo_uri = caller_self.server.repo_id_to_uri(repo_id)
+            repo_uri = caller_self.repo_id_to_uri(repo_id)
             # open a transaction for the repo_uri and retrieve the transaction target_uri
             transaction_uri = caller_self.server.start_transaction(repo_uri, auth=auth)
             kwargs['repo_uri'] = transaction_uri
@@ -135,10 +135,4 @@ class Server:
 
         return response.status_code
 
-    def repo_id_to_uri(self, repo_id, repo_uri=None):
-        """Translates a repository ID into a repository URI"""
-        if repo_uri is not None:
-            return repo_uri
-        repo_uri = self.RDF4J_base + 'repositories/{}'.format(repo_id)
-        return repo_uri
 
