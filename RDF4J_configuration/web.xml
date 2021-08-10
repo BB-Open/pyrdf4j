@@ -88,9 +88,16 @@
 
     <security-role>
         <description>
-            The role that is required to access the RDF4J server configuration
+            Management of repositories, all other functions granted.
         </description>
         <role-name>rdf4j-admin</role-name>
+    </security-role>
+
+    <security-role>
+        <description>
+            Read/write access to data of an existing repository
+        </description>
+        <role-name>rdf4j-editor</role-name>
     </security-role>
 
     <security-role>
@@ -118,10 +125,24 @@
 
     <security-constraint>
         <web-resource-collection>
+            <web-resource-name>repositories</web-resource-name>
+            <url-pattern>/repositories</url-pattern>
+            <url-pattern>/repositories/*</url-pattern>
+            <url-pattern>/repositories/**/statements</url-pattern>
+            <http-method>GET</http-method>
+            <http-method>POST</http-method>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>rdf4j-editor</role-name>
+        </auth-constraint>
+    </security-constraint>
+
+
+    <security-constraint>
+        <web-resource-collection>
             <web-resource-name>SPARQL query access to the repositories</web-resource-name>
             <url-pattern>/repositories</url-pattern>
             <url-pattern>/repositories/*</url-pattern>
-            <url-pattern>/repositories/**</url-pattern>
             <http-method>GET</http-method>
             <http-method>POST</http-method>
         </web-resource-collection>
