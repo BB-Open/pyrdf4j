@@ -57,19 +57,7 @@ class RDF4J:
 #        elif response.status_code != HTTPStatus.OK:
 #            raise TerminatingError
 
-        repo_uri = self.api.repo_id_to_uri(repo_id)
-
-        headers = {'Content-Type': content_type}
-        response = self.server.put(
-            repo_uri+ '?action=ADD',
-            data=triple_data,
-            headers=headers,
-            auth=auth,
-        )
-        if response.status_code != HTTPStatus.OK:
-            raise TerminatingError
-
-        return response
+        return self.api.put_triple_data_to_repo(repo_id, triple_data, content_type, auth=auth)
 
     def graph_from_uri(self, repository_id, uri, content_type, clear_repository=False):
         """
