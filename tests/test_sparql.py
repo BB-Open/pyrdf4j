@@ -12,10 +12,7 @@ class TestSPARQL(TestCase):
 
     def setUp(self):
         self.rdf4j = RDF4J(RDF4J_BASE_TEST)
-        try:
-            self.rdf4j.create_repository('test_sparql', auth=AUTH['admin'])
-        except CreateRepositoryAlreadyExists:
-            pass
+        self.rdf4j.create_repository('test_sparql', auth=AUTH['admin'], accept_existing=True)
 
         response = self.rdf4j.bulk_load_from_uri(
             'test_sparql',

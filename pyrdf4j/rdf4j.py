@@ -75,7 +75,7 @@ class RDF4J:
         else:
             raise BulkLoadError(response.content)
 
-    def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False, **kwargs):
+    def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False, accept_existing=False, **kwargs):
         """
         :param repo_id: ID of the repository to create
         :param repo_type: (Optional) Configuration template type name of the server (see repo_types.py)
@@ -94,8 +94,9 @@ class RDF4J:
             repo_label=repo_label,
             **kwargs)
 
+        response = self.api.create_repository(repo_id, repo_config, auth=auth)
+
         try:
-            response = self.api.create_repository(repo_id, repo_config, auth=auth)
             if response.status_code in [HTTPStatus.NO_CONTENT]:
                 return response
             elif response.status_code == HTTPStatus.CONFLICT:
@@ -109,6 +110,10 @@ class RDF4J:
             if overwrite:
                 self.api.drop_repository(repo_id, auth=auth)
                 self.api.create_repository(repo_id, repo_config, auth=auth)
+            elif accept_existing:
+                pass
+            else:
+                raise CreateRepositoryAlreadyExists(msg)
 
         return response
 

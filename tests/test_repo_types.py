@@ -24,7 +24,11 @@ class TestRepoTypes(TestCase):
                     with self.assertRaises(EXPECT_RAISE[repo_type]):
                         self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'])
                 else:
-                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin']),
+                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'])
+                    # Test overwrite
+                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'], overwrite=True)
+                    # Test accept exisiting
+                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'], accept_existing=True)
 
     def tearDown(self) :
         for repo_type in REPO_TYPES:

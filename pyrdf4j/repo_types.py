@@ -25,7 +25,6 @@ REPO_TYPES = [
     'remote',
     'memory-rdfs-dt',
     'memory-shacl',
-    'memory',
     'native-rdfs-lucene',
     'native-spin-rdfs',
     'sparql',

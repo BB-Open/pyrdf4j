@@ -163,10 +163,7 @@ class TestAUTH(TestCase):
         assert response.status_code >= 200
 
     def setUp(self) :
-        try:
-            sparql_endpoint = rdf4j.create_repository('test', auth=AUTH['admin'])
-        except CreateRepositoryAlreadyExists:
-            pass
+        sparql_endpoint = rdf4j.create_repository('test', auth=AUTH['admin'], accept_existing=True)
 
     def tearDown(self) :
         sparql_endpoint = rdf4j.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])
