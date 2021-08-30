@@ -9,7 +9,7 @@ from pyrdf4j.server import Transaction
 class APIRepo(APIBase):
 
     @Transaction()
-    def put_triple_data_to_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
+    def add_triple_data_to_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
         headers = {'Content-Type': content_type}
         response = self.server.put(
             repo_uri + '?action=ADD',
@@ -21,6 +21,10 @@ class APIRepo(APIBase):
             raise TerminatingError
 
         return response
+
+    def replace_triple_data_in_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
+        self.empty_repository(repo_id, auth=auth, repo_uri=repo_uri)
+        return self.add_triple_data_to_repo(repo_id, triple_data, content_type, auth=auth, repo_uri=repo_uri)
 
 
 

@@ -3,6 +3,7 @@ from http import HTTPStatus
 import requests
 
 from pyrdf4j.api_repo import APIRepo
+from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE
 from pyrdf4j.errors import URINotReachable, TerminatingError, BulkLoadError, \
     CreateRepositoryAlreadyExists, CreateRepositoryError, DropRepositoryError
 from pyrdf4j.server import Server, Transaction
@@ -25,10 +26,9 @@ class RDF4J:
             target_uri,
             content_type,
             clear_repository=False,
-            repo_label=None,
             repo_uri=None,
             auth=None,
-            ):
+    ):
         """
         Load the triple_data from the harvest uri
         and push it into the triplestore
@@ -45,21 +45,19 @@ class RDF4J:
         triple_data = response.content
 
         if clear_repository:
-            self.empty_repository(repo_uri)
+            self.api.replace_triple_data_in_repo(repo_id, triple_data, content_type, auth=auth, repo_uri=repo_uri)
 
-        if repo_label is None:
-            repo_label = 'None'
+        #        response = self.create_repository(repo_id, auth=auth)
+        #        if response.status_code == HTTPStatus.CONFLICT:
+        #            if b'REPOSITORY EXISTS' in response.content:
+        #                pass
+        #        elif response.status_code != HTTPStatus.OK:
+        #            raise TerminatingError
 
-#        response = self.create_repository(repo_id, auth=auth)
-#        if response.status_code == HTTPStatus.CONFLICT:
-#            if b'REPOSITORY EXISTS' in response.content:
-#                pass
-#        elif response.status_code != HTTPStatus.OK:
-#            raise TerminatingError
+        return self.api.add_triple_data_to_repo(repo_id, triple_data, content_type, auth=auth, repo_uri=repo_uri)
 
-        return self.api.put_triple_data_to_repo(repo_id, triple_data, content_type, auth=auth)
-
-    def graph_from_uri(self, repository_id, uri, content_type, clear_repository=False):
+    def graph_from_uri(self, repository_id, target_uri, content_type, repo_type='memory', repo_label=None, auth=None,
+                       overwrite=False, accept_existing=True, clear_repository=False, **kwargs):
         """
         :param repository_id:
         :param uri:
@@ -67,15 +65,14 @@ class RDF4J:
         :param clear_repository:
         :return:
         """
-        self.create_repository(repository_id)
-        response = self.server.rest_bulk_load_from_uri(
-            repository_id, uri, content_type, clear_repository=clear_repository)
-        if response.status_code == 200:
-            return self.server.sparql_for_repository(repository_id), response
-        else:
-            raise BulkLoadError(response.content)
+        self.create_repository(repository_id, accept_existing=accept_existing, repo_type=repo_type,
+                               repo_label=repo_label, auth=auth, overwrite=overwrite, **kwargs)
+        response = self.bulk_load_from_uri(
+            repository_id, target_uri, content_type, clear_repository=clear_repository, auth=auth)
+        return response
 
-    def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False, accept_existing=False, **kwargs):
+    def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False,
+                          accept_existing=False, **kwargs):
         """
         :param repo_id: ID of the repository to create
         :param repo_type: (Optional) Configuration template type name of the server (see repo_types.py)
@@ -133,33 +130,20 @@ class RDF4J:
         msg = str(response.status_code) + ': ' + str(response.content)
         raise DropRepositoryError(msg)
 
-
-    def move_data_between_repositorys(self, target_repository, source_repository):
+    def move_data_between_repositorys(self, target_repository, source_repository, auth=None):
         """
         :param target_repository:
         :param source_repository:
+        :param auth:
         :return:
         """
-        self.create_repository(source_repository)
-        self.create_repository(target_repository)
-        mime_type = 'application/rdf+xml'
-        headers = {
-            'Accept': mime_type,
-        }
+        self.create_repository(source_repository, accept_existing=True, auth=auth)
+        self.create_repository(target_repository, accept_existing=True, auth=auth)
 
-        data = {
-            'query': 'CONSTRUCT  WHERE { ?s ?p ?o }'
-        }
+        triple_data = self.api.query_repository(source_repository, "CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth)
 
-        response = requests.post(source, headers=headers, data=data)
-        triple_data = response.content
-
-        headers = {'Content-Type': mime_type}
-        response = requests.post(
-            target,
-            data=triple_data,
-            headers=headers,
-        )
+        response = self.api.add_triple_data_to_repo(target_repository, triple_data, DEFAULT_QUERY_RESPONSE_MIME_TYPE,
+                                                    auth=auth)
 
         return response
 
@@ -170,10 +154,10 @@ class RDF4J:
         :return:
         """
         mime_type = 'text/turtle'
-        triple_data = self.get_triple_data_from_query(repo_id, query, mime_type, auth=auth)
+        triple_data = self.get_triple_data_from_query(repo_id, query, mime_type=mime_type, auth=auth)
         return triple_data
 
-    def get_triple_data_from_query(self, repo_id, query, response_type=None, auth=None):
+    def get_triple_data_from_query(self, repo_id, query, mime_type=None, auth=None, repo_uri=None):
         """
         :param repo_id:
         :param query:
@@ -181,24 +165,12 @@ class RDF4J:
         :return:
         """
 
-        return self.api.query_repository(repo_id, query, response_type=response_type, auth=auth)
+        return self.api.query_repository(repo_id, query, mime_type=mime_type, auth=auth, repo_uri=repo_uri)
 
     def empty_repository(self, repository, auth=None):
         """
         :param repository:
         :return:
         """
-        self.create_repository(repository, auth=auth)
-        mime_type = 'application/rdf+xml'
-        query = '''DELETE {?s ?p ?o . } Where {?s ?p ?o}'''
-
-        headers = {
-            'Accept': mime_type
-        }
-
-        data = {'query': query}
-        response = requests.delete(source, headers=headers, data=data)
-        triple_data = response.content
-
-        return triple_data
-
+        # self.create_repository(repository, auth=auth)
+        self.api.empty_repository(repository, auth=auth)
