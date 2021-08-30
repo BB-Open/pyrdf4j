@@ -1,10 +1,10 @@
-
 from nose.tools import assert_equal
 
 from pyrdf4j import __version__
 
 from unittest import TestCase
 
+from pyrdf4j.api_graph import APIGraph
 from pyrdf4j.rdf4j import RDF4J
 from pyrdf4j.constants import RDF4J_BASE
 from pyrdf4j.errors import CreateRepositoryAlreadyExists
@@ -14,13 +14,18 @@ from tests.constants import ACTORS, AUTH, RDF4J_BASE_TEST
 def test_version():
     assert __version__ == '0.1.0'
 
-rdf4j = RDF4J(RDF4J_BASE_TEST)
 
-PUT = rdf4j.server.put
-GET = rdf4j.server.get
-DELETE = rdf4j.server.delete
-POST = rdf4j.server.post
+rdf4j_repo = RDF4J(RDF4J_BASE_TEST)
+rdf4j_graph = RDF4J(RDF4J_BASE_TEST, api=APIGraph)
 
+PUT_REPO = rdf4j_repo.server.put
+GET_REPO = rdf4j_repo.server.get
+DELETE_REPO = rdf4j_repo.server.delete
+POST_REPO = rdf4j_repo.server.post
+PUT_GRAPH = rdf4j_graph.server.put
+GET_GRAPH = rdf4j_graph.server.get
+DELETE_GRAPH = rdf4j_graph.server.delete
+POST_GRAPH = rdf4j_graph.server.post
 
 repos_dir = 'repos_dir'
 system_dir = 'system_dir'
@@ -28,33 +33,40 @@ repo = 'server'
 sparql = 'sparql'
 
 URIs = {
-    repos_dir : RDF4J_BASE + 'repositories',
-    system_dir : RDF4J_BASE + 'repositories/SYSTEM',
-    repo : RDF4J_BASE + 'repositories/test',
-    sparql : RDF4J_BASE + 'repositories/test/statements',
+    repos_dir: RDF4J_BASE + 'repositories',
+    system_dir: RDF4J_BASE + 'repositories/SYSTEM',
+    repo: RDF4J_BASE + 'repositories/test',
+    sparql: RDF4J_BASE + 'repositories/test/statements',
 }
 
 QUERIES = {
-    repo : {
-        'params' :"""select ?s ?o ?p WHERE {?s ?p ?o}""",
-        'headers' : {'content-type': 'application/sparql-query'},
+    repo: {
+        'params': """select ?s ?o ?p WHERE {?s ?p ?o}""",
+        'headers': {'content-type': 'application/sparql-query'},
     }
 }
 
-METHODS = {
-    'put' : PUT,
-    'get' : GET,
-    'delete' : DELETE,
-    'post' :POST
+METHODS_REPO = {
+    'put': PUT_REPO,
+    'get': GET_REPO,
+    'delete': DELETE_REPO,
+    'post': POST_REPO
+}
+METHODS_GRAPH = {
+    'put': PUT_GRAPH,
+    'get': GET_GRAPH,
+    'delete': DELETE_GRAPH,
+    'post': POST_GRAPH
 }
 
-methods = METHODS.keys()
+methods_repo = METHODS_REPO.keys()
+methods_graph = METHODS_GRAPH.keys()
 
 MATRIX = {
-    repos_dir : {
-        'admin' : {'get': 200,
-                   'post': 500,
-                   },
+    repos_dir: {
+        'admin': {'get': 200,
+                  'post': 500,
+                  },
         'editor': {'get': 200,
                    'post': 500,
                    },
@@ -63,20 +75,20 @@ MATRIX = {
                    }
     },
     system_dir: {
-        'admin' : {'get': 400,
-                   'post': 415,
-                   },
+        'admin': {'get': 400,
+                  'post': 415,
+                  },
         'viewer': {'get': 403,
                    'post': 403,
                    }
     },
     repo: {
-        'admin' : {'get': 200,
-                   'post': 200,
-                   'put': 409,
-                   'delete': 204,
-                   },
-        'editor' : {'get': 200,
+        'admin': {'get': 200,
+                  'post': 200,
+                  'put': 409,
+                  'delete': 204,
+                  },
+        'editor': {'get': 200,
                    'post': 200,
                    'put': 403,
                    'delete': 403,
@@ -87,18 +99,18 @@ MATRIX = {
                    'delete': 403,
                    }
     },
-    sparql:{
-        'admin' : {'get': 200,
-                   'post': 415,
-                   'put': 415,
-                   'delete': 204,
-                   },
-        'editor' : {'get': 200,
+    sparql: {
+        'admin': {'get': 200,
+                  'post': 415,
+                  'put': 415,
+                  'delete': 204,
+                  },
+        'editor': {'get': 200,
                    'post': 415,
                    'put': 403,
                    'delete': 403,
                    },
-        'viewer' : {'get': 200,
+        'viewer': {'get': 200,
                    'post': 415,
                    'put': 403,
                    'delete': 403,
@@ -109,17 +121,23 @@ MATRIX = {
 PARAMS = []
 for path in MATRIX:
     for actor in ACTORS:
-        for method in methods:
+        for method in methods_repo:
             try:
                 expected = MATRIX[path][actor][method]
-                PARAMS.append([path, actor, method, expected])
+                PARAMS.append([path, actor, method, expected, 'repo'])
             except:
-                PARAMS.append([path, actor, method, None])
+                PARAMS.append([path, actor, method, None, 'repo'])
+        for method in methods_graph:
+            try:
+                expected = MATRIX[path][actor][method]
+                PARAMS.append([path, actor, method, expected, 'graph'])
+            except:
+                PARAMS.append([path, actor, method, None, 'graph'])
 
 
 class TestAUTH(TestCase):
 
-    def do_request(self, path, actor, method):
+    def do_request(self, path, actor, method, api):
         headers = {'content-type': 'application/rdf+turtle'}
         data = None
 
@@ -135,8 +153,12 @@ class TestAUTH(TestCase):
                 data = {'query': QUERIES[path]['params']}
                 headers = QUERIES[path]['headers']
 
-
-        func = METHODS[method]
+        if api == 'repo':
+            func = METHODS_REPO[method]
+        elif api == 'graph':
+            func = METHODS_GRAPH[method]
+        else:
+            return
 
         if actor is not None:
             response = func(uri, headers=headers, data=data, auth=auth)
@@ -146,12 +168,12 @@ class TestAUTH(TestCase):
         return response
 
     def test_request(self):
-        for path, actor, method, expected in PARAMS:
-            with self.subTest(path=path, actor=actor, method=method, expected=expected):
+        for path, actor, method, expected, api in PARAMS:
+            with self.subTest(path=path, actor=actor, method=method, expected=expected, api=api):
 
                 self.setUp()
 
-                response = self.do_request(path, actor, method)
+                response = self.do_request(path, actor, method, api)
 
                 if expected is not None:
                     assert_equal(response.status_code, expected)
@@ -159,11 +181,11 @@ class TestAUTH(TestCase):
                     assert response.status_code >= 400
 
     def test_one_request(self):
-        response = self.do_request('server', 'viewer', 'delete')
+        response = self.do_request('server', 'viewer', 'delete', 'repo')
         assert response.status_code >= 200
 
-    def setUp(self) :
-        sparql_endpoint = rdf4j.create_repository('test', auth=AUTH['admin'], accept_existing=True)
+    def setUp(self):
+        sparql_endpoint = rdf4j_repo.create_repository('test', auth=AUTH['admin'], accept_existing=True)
 
-    def tearDown(self) :
-        sparql_endpoint = rdf4j.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])
+    def tearDown(self):
+        sparql_endpoint = rdf4j_repo.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])

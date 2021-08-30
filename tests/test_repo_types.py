@@ -1,3 +1,4 @@
+from pyrdf4j.api_graph import APIGraph
 from pyrdf4j.errors import CreateRepositoryError
 from unittest import TestCase
 
@@ -15,10 +16,12 @@ EXPECT_RAISE = {
 class TestRepoTypes(TestCase):
     def setUp(self):
         self.rdf4j = RDF4J(rdf4j_base=RDF4J_BASE_TEST)
+        # make sure, no repo exists because of failed or stopped test before
+        self.tearDown()
 
     def test_repo_types(self):
         for repo_type in REPO_TYPES:
-            repo_type_safe =  repo_type.replace('-', '_')
+            repo_type_safe = repo_type.replace('-', '_')
             with self.subTest(repo_type=repo_type):
                 if repo_type in EXPECT_RAISE:
                     with self.assertRaises(EXPECT_RAISE[repo_type]):
@@ -30,14 +33,17 @@ class TestRepoTypes(TestCase):
                     # Test accept exisiting
                     self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'], accept_existing=True)
 
-    def tearDown(self) :
+    def tearDown(self):
         for repo_type in REPO_TYPES:
-            repo_type_safe =  repo_type.replace('-', '_')
-            try:
-                sparql_endpoint = self.rdf4j.drop_repository(
-                    repo_type_safe,
-                    accept_not_exist=True,
-                    auth=AUTH['admin']
-                )
-            except:
-                pass
+            repo_type_safe = repo_type.replace('-', '_')
+            sparql_endpoint = self.rdf4j.drop_repository(
+                repo_type_safe,
+                accept_not_exist=True,
+                auth=AUTH['admin']
+            )
+
+
+class TestRepoTypesGraph(TestRepoTypes):
+
+    def setUp(self):
+        self.rdf4j = RDF4J(rdf4j_base=RDF4J_BASE_TEST, api=APIGraph)
