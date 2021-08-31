@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """RDF4J Rest-API access"""
-
+import sys
+import traceback
 from http import HTTPStatus
 
 import requests
@@ -8,7 +9,7 @@ import requests
 from pyrdf4j.constants import RDF4J_BASE, DEFAULT_CONTENT_TYPE, DEFAULT_QUERY_MIME_TYPE, \
     DEFAULT_QUERY_RESPONSE_MIME_TYPE
 from pyrdf4j.errors import CannotStartTransaction, CannotCommitTransaction, TerminatingError, \
-    CannotRollbackTransaction, QueryFailed
+    CannotRollbackTransaction, QueryFailed, DataBaseNotReachable
 
 
 class Transaction():
@@ -76,26 +77,58 @@ class Server:
     @staticmethod
     def get(uri, **params):
         """Low level GET request"""
-        response = requests.get(uri, params=params['data'], **params)
-        return response
+        try:
+            response = requests.get(uri, params=params['data'], **params)
+            return response
+        except requests.exceptions.ConnectionError as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            # todo: Logger
+            print("GET termiated due to error %s %s" % (exc_type, exc_value))
+            for line in traceback.format_tb(exc_traceback):
+                print("Traceback:%s" % line[:-1])
+            raise DataBaseNotReachable('Database not reachable. Tried GET on {uri} with params {params}'.format(uri=uri, params=params))
 
     @staticmethod
     def post(uri, **params):
         """Low level POST request"""
-        response = requests.post(uri, **params)
-        return response
+        try:
+            response = requests.post(uri, **params)
+            return response
+        except requests.exceptions.ConnectionError as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            # todo: Logger
+            print("POST termiated due to error %s %s" % (exc_type, exc_value))
+            for line in traceback.format_tb(exc_traceback):
+                print("Traceback:%s" % line[:-1])
+            raise DataBaseNotReachable('Database not reachable. Tried POST on {uri} with params {params}'.format(uri=uri, params=params))
 
     @staticmethod
     def put(uri, **params):
         """Low level PUT request"""
-        response = requests.put(uri, **params)
-        return response
+        try:
+            response = requests.put(uri, **params)
+            return response
+        except requests.exceptions.ConnectionError as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            # todo: Logger
+            print("PUT termiated due to error %s %s" % (exc_type, exc_value))
+            for line in traceback.format_tb(exc_traceback):
+                print("Traceback:%s" % line[:-1])
+            raise DataBaseNotReachable('Database not reachable. Tried PUT on {uri} with params {params}'.format(uri=uri, params=params))
 
     @staticmethod
     def delete(uri, **params):
         """Low level DELETE request"""
-        response = requests.delete(uri, **params)
-        return response
+        try:
+            response = requests.delete(uri, **params)
+            return response
+        except requests.exceptions.ConnectionError as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            # todo: Logger
+            print("DELETE termiated due to error %s %s" % (exc_type, exc_value))
+            for line in traceback.format_tb(exc_traceback):
+                print("Traceback:%s" % line[:-1])
+            raise DataBaseNotReachable('Database not reachable. Tried DELETE on {uri} with params {params}'.format(uri=uri, params=params))
 
     @staticmethod
     def start_transaction(repo_uri, auth=None):

@@ -46,3 +46,7 @@ class RepositoryTypeUnknown(Exception):
 
 class QueryFailed(Exception):
     """QueryFailed"""
+
+
+class DataBaseNotReachable(Exception):
+    """Database not reachable"""

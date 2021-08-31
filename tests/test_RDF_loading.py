@@ -1,10 +1,9 @@
-from pyrdf4j.api_graph import APIGraph
-from pyrdf4j.rdf4j import RDF4J
 from http import HTTPStatus
-
 from unittest import TestCase
 
-from pyrdf4j.errors import CreateRepositoryAlreadyExists
+from pyrdf4j.api_graph import APIGraph
+from pyrdf4j.errors import URINotReachable
+from pyrdf4j.rdf4j import RDF4J
 from tests.constants import AUTH, RDF4J_BASE_TEST
 
 
@@ -52,6 +51,13 @@ class TestRDFLoading(TestCase):
             auth=AUTH['admin'],
         )
         assert response.status_code == self.response_code_ok
+
+    def test_graph_from_unexisting_uri(self):
+        self.assertRaises(URINotReachable, self.rdf4j.graph_from_uri, 'test_bulk_load2',
+                          'https://ttl',
+                          'application/x-turtle',
+                          auth=AUTH['admin'])
+
 
 class TestRDFLoadingGraph(TestRDFLoading):
 

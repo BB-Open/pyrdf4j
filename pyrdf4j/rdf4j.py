@@ -1,3 +1,5 @@
+import sys
+import traceback
 from http import HTTPStatus
 
 import requests
@@ -39,7 +41,16 @@ class RDF4J:
         """
 
         # Load the triple_data from the harvest target_uri
-        response = requests.get(target_uri)
+        try:
+            response = requests.get(target_uri)
+        except requests.exceptions.ConnectionError as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            # todo: Logger
+            print("GET termiated due to error %s %s" % (exc_type, exc_value))
+            for line in traceback.format_tb(exc_traceback):
+                print("Traceback:%s" % line[:-1])
+            raise URINotReachable(
+                'Database not reachable. Tried GET on {uri}'.format(uri=target_uri))
         if response.status_code != HTTPStatus.OK:
             raise URINotReachable(response.content)
         triple_data = response.content
