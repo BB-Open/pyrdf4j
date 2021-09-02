@@ -20,7 +20,15 @@ class RDF4J:
     def __init__(self, rdf4j_base=None, api=APIRepo):
 
         self.server = Server(rdf4j_base)
-        self.api = api(self.server)
+        self.api_class = api
+        self.apis = {}
+        
+    def get_api(self, repo_id, repo_uri=None):
+        if repo_id in self.apis:
+            pass
+        else:
+            self.apis[repo_id] = self.api_class(self.server, repo_id, repo_uri=repo_uri)
+        return self.apis[repo_id]
 
     def bulk_load_from_uri(
             self,
@@ -55,8 +63,10 @@ class RDF4J:
             raise URINotReachable(response.content)
         triple_data = response.content
 
+        api = self.get_api(repo_id, repo_uri=repo_uri)
+
         if clear_repository:
-            self.api.replace_triple_data_in_repo(repo_id, triple_data, content_type, auth=auth, repo_uri=repo_uri)
+            api.replace_triple_data_in_repo(triple_data, content_type, auth=auth)
 
         #        response = self.create_repository(repo_id, auth=auth)
         #        if response.status_code == HTTPStatus.CONFLICT:
@@ -65,7 +75,7 @@ class RDF4J:
         #        elif response.status_code != HTTPStatus.OK:
         #            raise TerminatingError
 
-        return self.api.add_triple_data_to_repo(repo_id, triple_data, content_type, auth=auth, repo_uri=repo_uri)
+        return api.add_triple_data_to_repo(triple_data, content_type, auth=auth)
 
     def graph_from_uri(self, repository_id, target_uri, content_type, repo_type='memory', repo_label=None, auth=None,
                        overwrite=False, accept_existing=True, clear_repository=False, **kwargs):
@@ -102,7 +112,9 @@ class RDF4J:
             repo_label=repo_label,
             **kwargs)
 
-        response = self.api.create_repository(repo_id, repo_config, auth=auth)
+        api = self.get_api(repo_id)
+
+        response = api.create_repository(repo_config, auth=auth)
 
         try:
             if response.status_code in [HTTPStatus.NO_CONTENT]:
@@ -116,8 +128,8 @@ class RDF4J:
 
         except CreateRepositoryAlreadyExists:
             if overwrite:
-                self.api.drop_repository(repo_id, auth=auth)
-                self.api.create_repository(repo_id, repo_config, auth=auth)
+                api.drop_repository(auth=auth)
+                api.create_repository(repo_config, auth=auth)
             elif accept_existing:
                 pass
             else:
@@ -132,7 +144,9 @@ class RDF4J:
         :raises: DropRepositoryError if operation fails
         """
 
-        response = self.api.drop_repository(repo_id, auth=auth)
+        api = self.get_api(repo_id)
+
+        response = api.drop_repository(auth=auth)
         if response.status_code in [HTTPStatus.NO_CONTENT]:
             return response
         elif response.status_code in [HTTPStatus.NOT_FOUND]:
@@ -151,9 +165,10 @@ class RDF4J:
         self.create_repository(source_repository, accept_existing=True, auth=auth)
         self.create_repository(target_repository, accept_existing=True, auth=auth)
 
-        triple_data = self.api.query_repository(source_repository, "CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth)
-
-        response = self.api.add_triple_data_to_repo(target_repository, triple_data, DEFAULT_QUERY_RESPONSE_MIME_TYPE,
+        api_source = self.get_api(source_repository)
+        triple_data = api_source.query_repository("CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth)
+        api_target = self.get_api(target_repository)
+        response = api_target.add_triple_data_to_repo(triple_data, DEFAULT_QUERY_RESPONSE_MIME_TYPE,
                                                     auth=auth)
 
         return response
@@ -175,8 +190,9 @@ class RDF4J:
         :param mime_type:
         :return:
         """
+        api = self.get_api(repo_id, repo_uri=repo_uri)
 
-        return self.api.query_repository(repo_id, query, mime_type=mime_type, auth=auth, repo_uri=repo_uri)
+        return api.query_repository(query, mime_type=mime_type, auth=auth)
 
     def empty_repository(self, repository, auth=None):
         """
@@ -184,4 +200,5 @@ class RDF4J:
         :return:
         """
         # self.create_repository(repository, auth=auth)
-        self.api.empty_repository(repository, auth=auth)
+        api = self.get_api(repository)
+        return api.empty_repository(auth=auth)

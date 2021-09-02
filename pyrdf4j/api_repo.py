@@ -9,10 +9,11 @@ from pyrdf4j.server import Transaction
 class APIRepo(APIBase):
 
     @Transaction()
-    def add_triple_data_to_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
+    def add_triple_data_to_repo(self, triple_data, content_type, auth=None):
+
         headers = {'Content-Type': content_type}
         response = self.server.put(
-            repo_uri + '?action=ADD',
+            self.uri + '?action=ADD',
             data=triple_data,
             headers=headers,
             auth=auth,
@@ -22,9 +23,9 @@ class APIRepo(APIBase):
 
         return response
 
-    def replace_triple_data_in_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
-        self.empty_repository(repo_id, auth=auth, repo_uri=repo_uri)
-        return self.add_triple_data_to_repo(repo_id, triple_data, content_type, auth=auth, repo_uri=repo_uri)
+    def replace_triple_data_in_repo(self, triple_data, content_type, auth=None):
+        self.empty_repository(auth=auth)
+        return self.add_triple_data_to_repo(triple_data, content_type, auth=auth)
 
 
 

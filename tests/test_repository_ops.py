@@ -43,8 +43,9 @@ class TestRepositoryCreate(TestCase):
                     repo_label=repo_label,
                 )
 
-                response = self.rdf4j.api.create_repository(
-                    repo_id,
+                api = self.rdf4j.get_api(repo_id)
+
+                response = api.create_repository(
                     repo_config,
                     auth=AUTH[actor]
                 )
@@ -94,8 +95,9 @@ class TestRepositoryDrop(TestCase):
             with self.subTest(actor=actor, expect=expected):
                 repo_id = 'test_{}'.format(actor)
 
-                response = self.rdf4j.api.drop_repository(
-                    repo_id,
+                api = self.rdf4j.get_api(repo_id)
+
+                response = api.drop_repository(
                     auth=AUTH[actor]
                 )
                 if expected is not None:

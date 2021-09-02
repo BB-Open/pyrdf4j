@@ -13,12 +13,11 @@ class APIGraph(APIBase):
         repo_uri = self.server.RDF4J_base + 'repositories/{}/statements'.format(repo_id)
         return repo_uri
 
-    def replace_triple_data_in_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
-        repo_uri = self.repo_id_to_uri(repo_id, repo_uri=repo_uri)
+    def replace_triple_data_in_repo(self, triple_data, content_type, auth=None):
 
         headers = {'Content-Type': content_type}
         response = self.server.put(
-            repo_uri,
+            self.uri,
             data=triple_data,
             headers=headers,
             auth=auth,
@@ -28,12 +27,10 @@ class APIGraph(APIBase):
 
         return response
 
-    def add_triple_data_to_repo(self, repo_id, triple_data, content_type, auth=None, repo_uri=None):
-        repo_uri = self.repo_id_to_uri(repo_id, repo_uri=repo_uri)
-
+    def add_triple_data_to_repo(self, triple_data, content_type, auth=None):
         headers = {'Content-Type': content_type}
         response = self.server.post(
-            repo_uri,
+            self.uri,
             data=triple_data,
             headers=headers,
             auth=auth,

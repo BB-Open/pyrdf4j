@@ -28,18 +28,18 @@ class Transaction():
         def wrapper(*args, **kwargs):
             # get the self of the caller
             caller_self = args[0]
-            # get the repo_uri as the first argument (after self)
-            repo_id = args[1]
             # get auth information
             if 'auth' in kwargs:
                 auth = kwargs['auth']
             else:
                 auth = None
             # get the repo_uri from the server id
-            repo_uri = caller_self.repo_id_to_uri(repo_id)
+            uri = caller_self.uri
+            repo_uri = caller_self.repo_uri
             # open a transaction for the repo_uri and retrieve the transaction target_uri
-            transaction_uri = caller_self.server.start_transaction(repo_uri, auth=auth)
-            kwargs['repo_uri'] = transaction_uri
+            transaction_uri = caller_self.server.start_transaction(uri, auth=auth)
+            caller_self.uri = transaction_uri
+            caller_self.repo_uri = transaction_uri
             # Watch for exceptions in the operation. Wrong return codes have to raise TerminatingError
             # to trigger a rollback
             try:
@@ -49,11 +49,15 @@ class Transaction():
             except TerminatingError as e:
                 # I case of a terminating error roll back the transaction
                 caller_self.rollback(transaction_uri, auth=auth)
+                caller_self.uri = uri
+                caller_self.repo_uri = repo_uri
                 # Reraise the original error
                 raise e
 
             # commit the transaction
             caller_self.server.commit(transaction_uri, auth=auth)
+            caller_self.uri = uri
+            caller_self.repo_uri = repo_uri
 
             # Return the response to the actual database operation
             return response

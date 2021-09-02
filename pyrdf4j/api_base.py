@@ -7,8 +7,17 @@ from pyrdf4j.server import Transaction
 
 class APIBase:
 
-    def __init__(self, server):
+    def __init__(self, server, repo_id, repo_uri=None):
         self.server = server
+        self.repo_id = repo_id
+        self.repo_uri = self.repo_id_to_repo_uri(repo_id, repo_uri=repo_uri)
+        self.uri = self.repo_id_to_uri(repo_id, repo_uri=repo_uri)
+
+    @classmethod
+    def create(cls, server, repo_id, repo_config, repo_uri=None, auth=None):
+        api = cls(server, repo_id, repo_uri=repo_uri)
+        api.create_repository(repo_config, auth=auth)
+        return api
 
     def repo_id_to_repo_uri(self, repo_id, repo_uri=None):
         """Translates a repository ID into a repository endpoint URI"""
@@ -21,46 +30,40 @@ class APIBase:
         """Translates a repository ID into a api endpoint URI"""
         return self.repo_id_to_repo_uri(repo_id, repo_uri=repo_uri)
 
-    def create_repository(self, repo_id, repo_config, auth=None, repo_uri=None):
+    def create_repository(self, repo_config, auth=None):
         """
         Creates a repository in rdf4j
-        :param repo_id: ID of repository to be created
         :param repo_config: Configuration of the repository as TTL resource
         :param auth: Optional user credential in form of a HTTPBasicAuth instance (testing only)
         :return: the response from the Server server
         """
 
-        repo_uri = self.repo_id_to_repo_uri(repo_id, repo_uri=repo_uri)
         headers = {'content-type': 'application/x-turtle'}
         response = self.server.put(
-            repo_uri,
+            self.repo_uri,
             headers=headers,
             data=repo_config,
             auth=auth,
         )
         return response
 
-    def drop_repository(self, repo_id, auth=None, repo_uri=None):
+    def drop_repository(self, auth=None):
         """
         Drops a repository
-        :param repo_id: ID of repository to be dropped
         :param auth: (optional) authentication Instance
         :return: the response from the triple store
         """
 
-        repo_uri = self.repo_id_to_repo_uri(repo_id, repo_uri=repo_uri)
         headers = {'content-type': 'application/x-turtle'}
         response = self.server.delete(
-            repo_uri,
+            self.repo_uri,
             headers=headers,
             auth=auth,
         )
 
         return response
 
-    def empty_repository(self, repo_id, auth=None, repo_uri=None):
-        repo_uri = self.repo_id_to_uri(repo_id, repo_uri=repo_uri)
-
+    def empty_repository(self, auth=None):
         mime_type = 'application/rdf+xml'
         query = '''DELETE {?s ?p ?o . } Where {?s ?p ?o}'''
         #
@@ -68,13 +71,12 @@ class APIBase:
             'Accept': mime_type
         }
         data = {'query': query}
-        response = self.server.delete(repo_uri, headers=headers, data=data)
+        response = self.server.delete(self.uri, headers=headers, data=data)
         triple_data = response.content
         return triple_data
 
-    def query_repository(self, repo_id, query, query_type=None, mime_type=None, auth=None, repo_uri=None):
+    def query_repository(self, query, query_type=None, mime_type=None, auth=None):
 
-        repo_uri = self.repo_id_to_repo_uri(repo_id, repo_uri=repo_uri)
         if query_type is None:
             query_type = DEFAULT_QUERY_MIME_TYPE
 
@@ -87,7 +89,7 @@ class APIBase:
         }
 
         response = self.server.post(
-            repo_uri,
+            self.repo_uri,
             data=query,
             headers=headers,
             auth=auth,
