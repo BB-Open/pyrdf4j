@@ -67,7 +67,7 @@ class RDF4J:
         api = self.get_api(repo_id, repo_uri=repo_uri)
 
         if clear_repository:
-            api.replace_triple_data_in_repo(triple_data, content_type, auth=auth)
+            return api.replace_triple_data_in_repo(triple_data, content_type, auth=auth)
 
         #        response = self.create_repository(repo_id, auth=auth)
         #        if response.status_code == HTTPStatus.CONFLICT:
@@ -216,3 +216,14 @@ class RDF4J:
         json_data = json.loads(res)
 
         return json_data
+
+    def add_data_to_repo(self, repo_id,
+            triple_data,
+            content_type,
+            repo_uri=None,
+            auth=None):
+
+        api = self.get_api(repo_id, repo_uri=repo_uri)
+
+
+        return api.add_triple_data_to_repo(triple_data, content_type, auth=auth)
