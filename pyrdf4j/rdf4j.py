@@ -1,3 +1,4 @@
+import json
 import sys
 import traceback
 from http import HTTPStatus
@@ -5,7 +6,7 @@ from http import HTTPStatus
 import requests
 
 from pyrdf4j.api_repo import APIRepo
-from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE
+from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE, DEFAULT_RESPONSE_TRIPLE_MIME_TYPE
 from pyrdf4j.errors import URINotReachable, TerminatingError, BulkLoadError, \
     CreateRepositoryAlreadyExists, CreateRepositoryError, DropRepositoryError
 from pyrdf4j.server import Server, Transaction
@@ -22,7 +23,7 @@ class RDF4J:
         self.server = Server(rdf4j_base)
         self.api_class = api
         self.apis = {}
-        
+
     def get_api(self, repo_id, repo_uri=None):
         if repo_id in self.apis:
             pass
@@ -166,10 +167,11 @@ class RDF4J:
         self.create_repository(target_repository, accept_existing=True, auth=auth)
 
         api_source = self.get_api(source_repository)
-        triple_data = api_source.query_repository("CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth)
+        triple_data = api_source.query_repository("CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth,
+                                                  mime_type=DEFAULT_RESPONSE_TRIPLE_MIME_TYPE)
         api_target = self.get_api(target_repository)
-        response = api_target.add_triple_data_to_repo(triple_data, DEFAULT_QUERY_RESPONSE_MIME_TYPE,
-                                                    auth=auth)
+        response = api_target.add_triple_data_to_repo(triple_data, DEFAULT_RESPONSE_TRIPLE_MIME_TYPE,
+                                                      auth=auth)
 
         return response
 
@@ -192,6 +194,9 @@ class RDF4J:
         """
         api = self.get_api(repo_id, repo_uri=repo_uri)
 
+        if mime_type is None:
+            mime_type = DEFAULT_RESPONSE_TRIPLE_MIME_TYPE
+
         return api.query_repository(query, mime_type=mime_type, auth=auth)
 
     def empty_repository(self, repository, auth=None):
@@ -202,3 +207,12 @@ class RDF4J:
         # self.create_repository(repository, auth=auth)
         api = self.get_api(repository)
         return api.empty_repository(auth=auth)
+
+    def query_repository(self, repo_id, query, auth=None):
+        api = self.get_api(repo_id)
+
+        res = api.query_repository(query, auth=auth)
+
+        json_data = json.loads(res)
+
+        return json_data

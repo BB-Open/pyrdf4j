@@ -12,5 +12,8 @@ VIEWER_USER = 'viewer'
 VIEWER_PASS = 'pw3'
 
 DEFAULT_QUERY_MIME_TYPE = 'application/sparql-query'
-DEFAULT_QUERY_RESPONSE_MIME_TYPE = 'application/rdf+xml'
+# used for generating RDF-DATA by CONSTRUCT Statement
+DEFAULT_RESPONSE_TRIPLE_MIME_TYPE = 'application/rdf+xml'
+# used for getting query results by SELECT Statement
+DEFAULT_QUERY_RESPONSE_MIME_TYPE = 'application/sparql-results+json'
 DEFAULT_CONTENT_TYPE = 'application/x-turtle'

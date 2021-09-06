@@ -16,8 +16,8 @@ class APIBase:
     @classmethod
     def create(cls, server, repo_id, repo_config, repo_uri=None, auth=None):
         api = cls(server, repo_id, repo_uri=repo_uri)
-        api.create_repository(repo_config, auth=auth)
-        return api
+        response = api.create_repository(repo_config, auth=auth)
+        return api, response
 
     def repo_id_to_repo_uri(self, repo_id, repo_uri=None):
         """Translates a repository ID into a repository endpoint URI"""
@@ -101,6 +101,3 @@ class APIBase:
             return triple_data
         else:
             raise QueryFailed(query)
-
-
-

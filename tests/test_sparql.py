@@ -37,7 +37,6 @@ class TestSPARQL(TestCase):
         self.assertTrue('xml' in response.decode('utf8'))
         self.assertTrue(len(response.decode('utf8')) > 100)
 
-
     def test_copy_data(self):
         response = self.rdf4j.move_data_between_repositorys('test_sparql2', 'test_sparql', auth=AUTH['admin'])
         self.assertTrue(response.status_code == HTTPStatus.OK)
@@ -51,6 +50,16 @@ class TestSPARQL(TestCase):
         self.assertTrue('xml' in response.decode('utf8'))
         self.assertTrue(len(response.decode('utf8')) > 100)
 
+    def test_query_ids(self):
+        QUERY = """SELECT DISTINCT ?s
+       WHERE {
+          ?s a <http://www.w3.org/ns/dcat#Catalog>
+       }"""
+        response = self.rdf4j.query_repository('test_sparql', QUERY, auth=AUTH['admin'])
+
+        self.assertTrue('s' in response['head']['vars'])
+        self.assertTrue(len(response['results']['bindings']) >= 1)
+        self.assertTrue('s' in response['results']['bindings'][0])
 
 
 class TestSPARQLGraph(TestSPARQL):
