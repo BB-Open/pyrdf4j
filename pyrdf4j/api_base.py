@@ -1,6 +1,6 @@
 from http import HTTPStatus
 
-from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE, DEFAULT_QUERY_MIME_TYPE
+from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE, DEFAULT_QUERY_MIME_TYPE, DEFAULT_CHARSET
 from pyrdf4j.errors import QueryFailed
 from pyrdf4j.server import Transaction
 
@@ -30,7 +30,7 @@ class APIBase:
         """Translates a repository ID into a api endpoint URI"""
         return self.repo_id_to_repo_uri(repo_id, repo_uri=repo_uri)
 
-    def create_repository(self, repo_config, auth=None):
+    def create_repository(self, repo_config, auth=None, charset=None):
         """
         Creates a repository in rdf4j
         :param repo_config: Configuration of the repository as TTL resource
@@ -38,7 +38,10 @@ class APIBase:
         :return: the response from the Server server
         """
 
-        headers = {'content-type': 'application/x-turtle'}
+        if charset is None:
+            charset = DEFAULT_CHARSET
+
+        headers = {'content-type': 'application/x-turtle; charset=' + charset}
         response = self.server.put(
             self.repo_uri,
             headers=headers,
@@ -47,14 +50,16 @@ class APIBase:
         )
         return response
 
-    def drop_repository(self, auth=None):
+    def drop_repository(self, auth=None, charset=None):
         """
         Drops a repository
         :param auth: (optional) authentication Instance
         :return: the response from the triple store
         """
+        if charset is None:
+            charset = DEFAULT_CHARSET
 
-        headers = {'content-type': 'application/x-turtle'}
+        headers = {'content-type': 'application/x-turtle; charset=' + charset}
         response = self.server.delete(
             self.repo_uri,
             headers=headers,
@@ -75,7 +80,10 @@ class APIBase:
         triple_data = response.content
         return triple_data
 
-    def query_repository(self, query, query_type=None, mime_type=None, auth=None):
+    def query_repository(self, query, query_type=None, mime_type=None, auth=None, charset=None):
+
+        if charset is None:
+            charset = DEFAULT_CHARSET
 
         if query_type is None:
             query_type = DEFAULT_QUERY_MIME_TYPE
@@ -85,7 +93,7 @@ class APIBase:
 
         headers = {
             'Accept': mime_type,
-            'content-type': query_type,
+            'content-type': query_type + '; charset=' + charset,
         }
 
         response = self.server.post(

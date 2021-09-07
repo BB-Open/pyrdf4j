@@ -17,3 +17,5 @@ DEFAULT_RESPONSE_TRIPLE_MIME_TYPE = 'application/rdf+xml'
 # used for getting query results by SELECT Statement
 DEFAULT_QUERY_RESPONSE_MIME_TYPE = 'application/sparql-results+json'
 DEFAULT_CONTENT_TYPE = 'application/x-turtle'
+
+DEFAULT_CHARSET = 'utf-8'
