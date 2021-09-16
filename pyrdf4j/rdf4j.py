@@ -156,15 +156,15 @@ class RDF4J:
         msg = str(response.status_code) + ': ' + str(response.content)
         raise DropRepositoryError(msg)
 
-    def move_data_between_repositorys(self, target_repository, source_repository, auth=None):
+    def move_data_between_repositorys(self, target_repository, source_repository, auth=None, repo_type='memory'):
         """
         :param target_repository:
         :param source_repository:
         :param auth:
         :return:
         """
-        self.create_repository(source_repository, accept_existing=True, auth=auth)
-        self.create_repository(target_repository, accept_existing=True, auth=auth)
+        self.create_repository(source_repository, accept_existing=True, auth=auth, repo_type=repo_type)
+        self.create_repository(target_repository, accept_existing=True, auth=auth, repo_type=repo_type)
 
         api_source = self.get_api(source_repository)
         triple_data = api_source.query_repository("CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth,
@@ -224,6 +224,5 @@ class RDF4J:
             auth=None):
 
         api = self.get_api(repo_id, repo_uri=repo_uri)
-
 
         return api.add_triple_data_to_repo(triple_data, content_type, auth=auth)

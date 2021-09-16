@@ -1,6 +1,6 @@
 #
 # Sesame configuration template for a native repository with
-# RDFS support and a SPIN reasoner 
+# RDFS support and a SPIN reasoner
 #
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix rep: <http://www.openrdf.org/config/repository#>.
@@ -27,6 +27,7 @@
 			 	 sail:sailType "openrdf:DedupingInferencer" ;
 				 sail:delegate [
 					sail:sailType "openrdf:NativeStore" ;
+					ns:forceSync {force_sync} ;
                     sail:iterationCacheSyncThreshold "{iterationCacheSyncThreshold}";
                     sb:evaluationStrategyFactory "{evaluationStrategyFactory}";
                     ns:tripleIndexes "{tripleIndexes}" ;

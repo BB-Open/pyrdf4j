@@ -49,6 +49,7 @@ DEFAULTS = {
     'SPARQL_update_endpoint': 'http://example.org',
     'rule_query': 'This is bogus',
     'matcher_query': 'This is bogus',
+    'force_sync': 'true',
 }
 
 
@@ -64,6 +65,7 @@ def repo_config_factory(repo_type, repo_id, repo_label, **kwargs):
     # Open the template file and read it
     with open(template_path) as template_file:
         template = template_file.read()
+
 
     # get the default values for the template
     params = DEFAULTS
