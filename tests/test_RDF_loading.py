@@ -41,7 +41,26 @@ class TestRDFLoading(TestCase):
             clear_repository=True
         )
 
+        response = self.rdf4j.bulk_load_from_uri(
+            'test_bulk_load',
+            'https://backend.datenadler.de/concepts/rdf_ttl',
+            'application/x-turtle',
+            auth=AUTH['admin'],
+            clear_repository=True
+        )
+
         assert response.status_code == self.response_code_ok
+
+        QUERY = "CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}"
+        response = self.rdf4j.get_triple_data_from_query(
+            'test_bulk_load',
+            QUERY,
+            auth=AUTH['viewer'],
+        )
+
+        self.assertTrue('xml' in response.decode('utf8'))
+        self.assertTrue(len(response.decode('utf8')) > 100)
+        self.assertTrue('Potsdam' not in response.decode('utf-8'))
 
     def test_graph_from_uri(self):
         response = self.rdf4j.graph_from_uri(

@@ -69,16 +69,13 @@ class APIBase:
         return response
 
     def empty_repository(self, auth=None):
-        mime_type = 'application/rdf+xml'
-        query = '''DELETE {?s ?p ?o . } Where {?s ?p ?o}'''
-        #
-        headers = {
-            'Accept': mime_type
-        }
-        data = {'query': query}
-        response = self.server.delete(self.uri, headers=headers, data=data)
-        triple_data = response.content
-        return triple_data
+        # because we can not send a delete query, we query repo config, delete repo und create new one with same config
+        config = self.repo_uri + '/config'
+        headers = {'content-type': 'application/x-turtle; charset=' + DEFAULT_CHARSET}
+        response = self.server.get(config, auth=auth, data={}, headers=headers)
+        res = response.content.decode('utf8')
+        self.drop_repository(auth=auth)
+        self.create_repository(res, auth=auth)
 
     def query_repository(self, query, query_type=None, mime_type=None, auth=None, charset=None):
 
@@ -102,7 +99,6 @@ class APIBase:
             headers=headers,
             auth=auth,
         )
-
         if response.status_code in [HTTPStatus.OK]:
             triple_data = response.content
             triple_data = triple_data

@@ -20,6 +20,8 @@ class APIGraph(APIBase):
             charset = DEFAULT_CHARSET
 
         headers = {'Content-Type': content_type + '; charset=' + charset}
+        self.empty_repository(auth=auth)
+
         response = self.server.put(
             self.uri,
             data=triple_data,
@@ -45,3 +47,16 @@ class APIGraph(APIBase):
             raise TerminatingError
 
         return response
+
+
+    def empty_repository(self, auth=None):
+        mime_type = 'application/rdf+xml'
+        query = '''DELETE {?s ?p ?o . } Where {?s ?p ?o}'''
+        #
+        headers = {
+            'Accept': mime_type
+        }
+        data = {'query': query}
+        response = self.server.delete(self.uri, headers=headers, data=data, auth=auth)
+        triple_data = response.content
+        return triple_data
