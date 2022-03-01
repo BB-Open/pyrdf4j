@@ -48,7 +48,10 @@ class Transaction():
                 response = func(caller_self, *args[1:], **kwargs)
             except TerminatingError as e:
                 # I case of a terminating error roll back the transaction
-                caller_self.rollback(transaction_uri, auth=auth)
+                try:
+                    caller_self.server.rollback(transaction_uri, auth=auth)
+                except CannotRollbackTransaction:
+                    pass
                 caller_self.uri = uri
                 caller_self.repo_uri = repo_uri
                 # Reraise the original error
