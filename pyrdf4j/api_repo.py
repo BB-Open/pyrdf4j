@@ -21,7 +21,7 @@ class APIRepo(APIBase):
             auth=auth,
         )
         if response.status_code != HTTPStatus.OK:
-            raise TerminatingError
+            raise TerminatingError(response.content)
 
         return response
 

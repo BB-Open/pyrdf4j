@@ -29,7 +29,7 @@ class APIGraph(APIBase):
             auth=auth,
         )
         if response.status_code != HTTPStatus.NO_CONTENT:
-            raise TerminatingError
+            raise TerminatingError(response.content)
 
         return response
 
@@ -44,7 +44,7 @@ class APIGraph(APIBase):
             auth=auth,
         )
         if response.status_code != HTTPStatus.NO_CONTENT:
-            raise TerminatingError
+            raise TerminatingError(response.content)
 
         return response
 
