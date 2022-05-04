@@ -33,7 +33,7 @@ class APIGraph(APIBase):
 
         return response
 
-    def add_triple_data_to_repo(self, triple_data, content_type, auth=None, charset = None):
+    def add_triple_data_to_repo(self, triple_data, content_type, auth=None, charset=None):
         if charset is None:
             charset = DEFAULT_CHARSET
         headers = {'Content-Type': content_type + '; charset=' + charset}
@@ -47,7 +47,6 @@ class APIGraph(APIBase):
             raise TerminatingError(response.content)
 
         return response
-
 
     def empty_repository(self, auth=None):
         mime_type = 'application/rdf+xml'

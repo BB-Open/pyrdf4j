@@ -1,5 +1,6 @@
 """Error Api"""
 
+
 class URINotReachable(Exception):
     """URINotReachable"""
 

@@ -1,6 +1,8 @@
 from http import HTTPStatus
 
-from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE, DEFAULT_QUERY_MIME_TYPE, DEFAULT_CHARSET
+from pyrdf4j.constants import DEFAULT_QUERY_RESPONSE_MIME_TYPE, \
+    DEFAULT_QUERY_MIME_TYPE, \
+    DEFAULT_CHARSET
 from pyrdf4j.errors import QueryFailed
 from pyrdf4j.server import Transaction
 
@@ -69,13 +71,15 @@ class APIBase:
         return response
 
     def empty_repository(self, auth=None):
-        # because we can not send a delete query, we query repo config, delete repo und create new one with same config
+        # because we can not send a delete query,
+        # we query repo config,
+        # delete repo und create new one with same config
         config = self.repo_uri + '/config'
         headers = {'content-type': 'application/x-turtle; charset=' + DEFAULT_CHARSET}
         response = self.server.get(config, auth=auth, data={}, headers=headers)
         res = response.content.decode('utf8')
         self.drop_repository(auth=auth)
-        self.create_repository(res, auth=auth)
+        # self.create_repository(res, auth=auth)
 
     def query_repository(self, query, query_type=None, mime_type=None, auth=None, charset=None):
 

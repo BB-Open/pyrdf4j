@@ -11,11 +11,20 @@ class TestEmpty(TestCase):
 
     def setUp(self):
         self.rdf4j = RDF4J(RDF4J_BASE_TEST)
-        self.rdf4j.create_repository('test_bulk_load', auth=AUTH['admin'], overwrite=True, repo_type='native')
+        self.rdf4j.create_repository(
+            'test_bulk_load',
+            auth=AUTH['admin'],
+            overwrite=True,
+            repo_type='native'
+        )
         self.response_code_ok = HTTPStatus.OK
 
     def tearDown(self):
-        sparql_endpoint = self.rdf4j.drop_repository('test_bulk_load', auth=AUTH['admin'], accept_not_exist=True)
+        sparql_endpoint = self.rdf4j.drop_repository(
+            'test_bulk_load',
+            auth=AUTH['admin'],
+            accept_not_exist=True
+        )
 
     def test_empty(self):
         response = self.rdf4j.bulk_load_from_uri(

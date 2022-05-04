@@ -24,7 +24,11 @@ class TestRepositoryCreate(TestCase):
     def tearDown(self):
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
-            sparql_endpoint = self.rdf4j.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
+            sparql_endpoint = self.rdf4j.drop_repository(
+                repo_id,
+                accept_not_exist=True,
+                auth=AUTH['admin']
+            )
 
     def test_create_repository(self):
         EXPECT = {
@@ -84,7 +88,11 @@ class TestRepositoryDrop(TestCase):
     def tearDown(self):
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
-            sparql_endpoint = self.rdf4j.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
+            sparql_endpoint = self.rdf4j.drop_repository(
+                repo_id,
+                accept_not_exist=True,
+                auth=AUTH['admin']
+            )
 
     def test_drop_repository(self):
         EXPECT = {
@@ -137,7 +145,11 @@ class TestRepositoryCreateByAPIRepo(TestCase):
     def tearDown(self):
         for actor in AUTH:
             repo_id = 'test_{}'.format(actor)
-            sparql_endpoint = self.rdf4j.drop_repository(repo_id, accept_not_exist=True, auth=AUTH['admin'])
+            sparql_endpoint = self.rdf4j.drop_repository(
+                repo_id,
+                accept_not_exist=True,
+                auth=AUTH['admin']
+            )
 
     def test_create_repository(self):
         EXPECT = {
@@ -157,7 +169,12 @@ class TestRepositoryCreateByAPIRepo(TestCase):
                     repo_label=repo_label,
                 )
 
-                api_instance, response = self.api.create(self.server, repo_id, repo_config, auth=AUTH[actor])
+                api_instance, response = self.api.create(
+                    self.server,
+                    repo_id,
+                    repo_config,
+                    auth=AUTH[actor]
+                )
 
                 self.assertIsInstance(api_instance, self.api)
 

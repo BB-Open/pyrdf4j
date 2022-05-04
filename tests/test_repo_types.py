@@ -6,7 +6,9 @@ from pyrdf4j.rdf4j import RDF4J
 from pyrdf4j.repo_types import REPO_TYPES
 from tests.constants import AUTH, RDF4J_BASE_TEST
 
-# The custom rules are no parameters, so there cannot set a good default value. So we expect these cases to raise.
+# The custom rules are no parameters,
+# so there cannot set a good default value.
+# So we expect these cases to raise.
 EXPECT_RAISE = {
     'memory-customrule': CreateRepositoryError,
     'native-customrule': CreateRepositoryError,
@@ -27,11 +29,25 @@ class TestRepoTypes(TestCase):
                     with self.assertRaises(EXPECT_RAISE[repo_type]):
                         self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'])
                 else:
-                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'])
+                    self.rdf4j.create_repository(
+                        repo_type_safe,
+                        repo_type,
+                        auth=AUTH['admin']
+                    )
                     # Test overwrite
-                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'], overwrite=True)
+                    self.rdf4j.create_repository(
+                        repo_type_safe,
+                        repo_type,
+                        auth=AUTH['admin'],
+                        overwrite=True
+                    )
                     # Test accept exisiting
-                    self.rdf4j.create_repository(repo_type_safe, repo_type, auth=AUTH['admin'], accept_existing=True)
+                    self.rdf4j.create_repository(
+                        repo_type_safe,
+                        repo_type,
+                        auth=AUTH['admin'],
+                        accept_existing=True
+                    )
 
     def tearDown(self):
         for repo_type in REPO_TYPES:

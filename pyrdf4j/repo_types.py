@@ -35,14 +35,16 @@ REPO_TYPES = [
 ]
 
 
-# Default parameter values for the templates. Please consult the Server documentation on details to these parameters.
+# Default parameter values for the templates.
+# Please consult the Server documentation on details to these parameters.
 DEFAULTS = {
     'persist': 'false',
     'iterationCacheSyncThreshold': 10000,
-    'evaluationStrategyFactory': 'org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategyFactory',
+    'evaluationStrategyFactory':
+        'org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategyFactory',
     'syncDelay': 0,
     'tripleIndexes': 'spoc,posc',
-    'queryLanguage' : 'SPARQL',
+    'queryLanguage': 'SPARQL',
     'Sesame_server_location': 'http://example.org',
     'Remote_repository_ID': 'Test',
     'SPARQL_query_endpoint': 'http://example.org',
@@ -55,17 +57,18 @@ DEFAULTS = {
 
 def repo_config_factory(repo_type, repo_id, repo_label, **kwargs):
     """
-    Constructs a repository configuration in form of a TTL structure utilizing the TTL templates from ./repo_types_template.
+    Constructs a repository configuration in form of a
+    TTL structure utilizing the TTL templates from
+    ./repo_types_template.
     """
     # Check if the repo_type is a known template
     if repo_type not in REPO_TYPES:
         raise RepositoryTypeUnknown
     # Get the path to the template
-    template_path = TEMPLATE_FOLDER / '{}{}'.format(repo_type,'.ttl')
+    template_path = TEMPLATE_FOLDER / '{}{}'.format(repo_type, '.ttl')
     # Open the template file and read it
     with open(template_path) as template_file:
         template = template_file.read()
-
 
     # get the default values for the template
     params = DEFAULTS

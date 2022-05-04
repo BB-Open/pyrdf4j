@@ -78,8 +78,17 @@ class RDF4J:
 
         return api.add_triple_data_to_repo(triple_data, content_type, auth=auth)
 
-    def graph_from_uri(self, repository_id, target_uri, content_type, repo_type='memory', repo_label=None, auth=None,
-                       overwrite=False, accept_existing=True, clear_repository=False, **kwargs):
+    def graph_from_uri(self,
+                       repository_id,
+                       target_uri,
+                       content_type,
+                       repo_type='memory',
+                       repo_label=None,
+                       auth=None,
+                       overwrite=False,
+                       accept_existing=True,
+                       clear_repository=False,
+                       **kwargs):
         """
         :param repository_id:
         :param uri:
@@ -93,14 +102,23 @@ class RDF4J:
             repository_id, target_uri, content_type, clear_repository=clear_repository, auth=auth)
         return response
 
-    def create_repository(self, repo_id, repo_type='memory', repo_label=None, auth=None, overwrite=False,
-                          accept_existing=False, **kwargs):
+    def create_repository(self,
+                          repo_id,
+                          repo_type='memory',
+                          repo_label=None,
+                          auth=None,
+                          overwrite=False,
+                          accept_existing=False,
+                          **kwargs):
         """
         :param repo_id: ID of the repository to create
-        :param repo_type: (Optional) Configuration template type name of the server (see repo_types.py)
+        :param repo_type: (Optional) Configuration template
+            type name of the server (see repo_types.py)
         :param repo_label: (Optional) Label for the repository
-        :param auth: (Optional) user credentials for authentication in form of a HTTPBasicAuth instance (testing only)
-        :param overwrite: (Optional) If overwrite is enabled an existing server will be overwritten (testing only). Use with care!
+        :param auth: (Optional) user credentials for authentication
+            in form of a HTTPBasicAuth instance (testing only)
+        :param overwrite: (Optional) If overwrite is enabled an existing
+            server will be overwritten (testing only). Use with care!
         :param kwargs: Parameters for the Configuration template
         :return:
         """
@@ -156,22 +174,36 @@ class RDF4J:
         msg = str(response.status_code) + ': ' + str(response.content)
         raise DropRepositoryError(msg)
 
-    def move_data_between_repositorys(self, target_repository, source_repository, auth=None, repo_type='memory'):
+    def move_data_between_repositorys(
+            self,
+            target_repository,
+            source_repository,
+            auth=None,
+            repo_type='memory'):
         """
         :param target_repository:
         :param source_repository:
         :param auth:
         :return:
         """
-        self.create_repository(source_repository, accept_existing=True, auth=auth, repo_type=repo_type)
-        self.create_repository(target_repository, accept_existing=True, auth=auth, repo_type=repo_type)
+        self.create_repository(source_repository,
+                               accept_existing=True,
+                               auth=auth,
+                               repo_type=repo_type)
+        self.create_repository(target_repository,
+                               accept_existing=True,
+                               auth=auth,
+                               repo_type=repo_type)
 
         api_source = self.get_api(source_repository)
-        triple_data = api_source.query_repository("CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}", auth=auth,
+        triple_data = api_source.query_repository("CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}",
+                                                  auth=auth,
                                                   mime_type=DEFAULT_RESPONSE_TRIPLE_MIME_TYPE)
         api_target = self.get_api(target_repository)
-        response = api_target.add_triple_data_to_repo(triple_data, DEFAULT_RESPONSE_TRIPLE_MIME_TYPE,
-                                                      auth=auth)
+        response = api_target.add_triple_data_to_repo(
+            triple_data,
+            DEFAULT_RESPONSE_TRIPLE_MIME_TYPE,
+            auth=auth)
 
         return response
 
@@ -182,10 +214,20 @@ class RDF4J:
         :return:
         """
         mime_type = 'text/turtle'
-        triple_data = self.get_triple_data_from_query(repo_id, query, mime_type=mime_type, auth=auth)
+        triple_data = self.get_triple_data_from_query(
+            repo_id,
+            query,
+            mime_type=mime_type,
+            auth=auth)
         return triple_data
 
-    def get_triple_data_from_query(self, repo_id, query, mime_type=None, auth=None, repo_uri=None):
+    def get_triple_data_from_query(
+            self,
+            repo_id,
+            query,
+            mime_type=None,
+            auth=None,
+            repo_uri=None):
         """
         :param repo_id:
         :param query:
@@ -217,7 +259,9 @@ class RDF4J:
 
         return json_data
 
-    def add_data_to_repo(self, repo_id,
+    def add_data_to_repo(
+            self,
+            repo_id,
             triple_data,
             content_type,
             repo_uri=None,

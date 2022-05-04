@@ -22,9 +22,21 @@ class TestSPARQL(TestCase):
         assert response.status_code == HTTPStatus.OK
 
     def tearDown(self):
-        sparql_endpoint = self.rdf4j.drop_repository('test_sparql', auth=AUTH['admin'], accept_not_exist=True)
-        sparql_endpoint3 = self.rdf4j.drop_repository('test_sparql3', auth=AUTH['admin'], accept_not_exist=True)
-        sparql_endpoint2 = self.rdf4j.drop_repository('test_sparql2', auth=AUTH['admin'], accept_not_exist=True)
+        sparql_endpoint = self.rdf4j.drop_repository(
+            'test_sparql',
+            auth=AUTH['admin'],
+            accept_not_exist=True
+        )
+        sparql_endpoint3 = self.rdf4j.drop_repository(
+            'test_sparql3',
+            auth=AUTH['admin'],
+            accept_not_exist=True
+        )
+        sparql_endpoint2 = self.rdf4j.drop_repository(
+            'test_sparql2',
+            auth=AUTH['admin'],
+            accept_not_exist=True
+        )
 
     def test_select_all(self):
         QUERY = "CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}"
@@ -38,7 +50,11 @@ class TestSPARQL(TestCase):
         self.assertTrue(len(response.decode('utf8')) > 100)
 
     def test_copy_data(self):
-        response = self.rdf4j.move_data_between_repositorys('test_sparql2', 'test_sparql', auth=AUTH['admin'])
+        response = self.rdf4j.move_data_between_repositorys(
+            'test_sparql2',
+            'test_sparql',
+            auth=AUTH['admin']
+        )
         self.assertTrue(response.status_code == HTTPStatus.OK)
         QUERY = "CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}"
         response = self.rdf4j.get_triple_data_from_query(
@@ -72,18 +88,21 @@ class TestSPARQL(TestCase):
         self.assertTrue(len(response['results']['bindings']) == 0)
 
     def test_add(self):
-        DATA = '<http://www.opendatasoft.com> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Agent> .'
+        DATA = '<http://www.opendatasoft.com> ' \
+               '<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> ' \
+               '<http://xmlns.com/foaf/0.1/Agent> .'
         self.rdf4j.add_data_to_repo('test_sparql3', DATA, 'text/turtle', auth=AUTH['admin'])
 
         QUERY = """SELECT DISTINCT ?s
-               WHERE {
-                  ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Agent>
-               }"""
+           WHERE {
+            ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Agent>
+           }"""
         response = self.rdf4j.query_repository('test_sparql3', QUERY, auth=AUTH['admin'])
 
         self.assertTrue('s' in response['head']['vars'])
         self.assertTrue(len(response['results']['bindings']) >= 1)
         self.assertTrue('s' in response['results']['bindings'][0])
+
 
 class TestSPARQLGraph(TestSPARQL):
 
@@ -101,7 +120,11 @@ class TestSPARQLGraph(TestSPARQL):
         assert response.status_code == HTTPStatus.NO_CONTENT
 
     def test_copy_data(self):
-        response = self.rdf4j.move_data_between_repositorys('test_sparql2', 'test_sparql', auth=AUTH['admin'])
+        response = self.rdf4j.move_data_between_repositorys(
+            'test_sparql2',
+            'test_sparql',
+            auth=AUTH['admin']
+        )
         self.assertTrue(response.status_code == HTTPStatus.NO_CONTENT)
         QUERY = "CONSTRUCT {?s ?o ?p} WHERE {?s ?o ?p}"
         response = self.rdf4j.get_triple_data_from_query(

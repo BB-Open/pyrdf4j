@@ -11,8 +11,13 @@ class TestDatabaseNotReachable(TestCase):
 
     def test_create_database(self):
         self.rdf4j = RDF4J(RDF4J_BASE_TEST)
-        self.assertRaises(DataBaseNotReachable, self.rdf4j.create_repository, 'test_sparql', auth=AUTH['admin'],
-                          accept_existing=True)
+        self.assertRaises(
+            DataBaseNotReachable,
+            self.rdf4j.create_repository,
+            'test_sparql',
+            auth=AUTH['admin'],
+            accept_existing=True
+        )
 
 
 class TestDatabaseNotReachableGraph(TestDatabaseNotReachable):

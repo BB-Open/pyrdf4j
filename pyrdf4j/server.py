@@ -15,7 +15,8 @@ from pyrdf4j.errors import CannotStartTransaction, CannotCommitTransaction, Term
 class Transaction():
     """
     Decorator to brace a transaction around a triple store operation.
-    It is required that the repository target_uri is the first arg (after self) of the decorated function
+    It is required that the repository target_uri is the
+    first arg (after self) of the decorated function
     Returns: The response to the actual triple store operation
     Raises: Raises TerminatingError if a rollback was necessary
 
@@ -40,7 +41,8 @@ class Transaction():
             transaction_uri = caller_self.server.start_transaction(uri, auth=auth)
             caller_self.uri = transaction_uri
             caller_self.repo_uri = transaction_uri
-            # Watch for exceptions in the operation. Wrong return codes have to raise TerminatingError
+            # Watch for exceptions in the operation.
+            # Wrong return codes have to raise TerminatingError
             # to trigger a rollback
             try:
                 # do the actual database operation and remember the response.
@@ -93,7 +95,12 @@ class Server:
             print("GET termiated due to error %s %s" % (exc_type, exc_value))
             for line in traceback.format_tb(exc_traceback):
                 print("Traceback:%s" % line[:-1])
-            raise DataBaseNotReachable('Database not reachable. Tried GET on {uri} with params {params}'.format(uri=uri, params=params))
+            raise DataBaseNotReachable(
+                'Database not reachable. Tried GET on {uri} with params {params}'.format(
+                    uri=uri,
+                    params=params
+                )
+            )
 
     @staticmethod
     def post(uri, **params):
@@ -107,7 +114,12 @@ class Server:
             print("POST termiated due to error %s %s" % (exc_type, exc_value))
             for line in traceback.format_tb(exc_traceback):
                 print("Traceback:%s" % line[:-1])
-            raise DataBaseNotReachable('Database not reachable. Tried POST on {uri} with params {params}'.format(uri=uri, params=params))
+            raise DataBaseNotReachable(
+                'Database not reachable. Tried POST on {uri} with params {params}'.format(
+                    uri=uri,
+                    params=params
+                )
+            )
 
     @staticmethod
     def put(uri, **params):
@@ -121,7 +133,12 @@ class Server:
             print("PUT termiated due to error %s %s" % (exc_type, exc_value))
             for line in traceback.format_tb(exc_traceback):
                 print("Traceback:%s" % line[:-1])
-            raise DataBaseNotReachable('Database not reachable. Tried PUT on {uri} with params {params}'.format(uri=uri, params=params))
+            raise DataBaseNotReachable(
+                'Database not reachable. Tried PUT on {uri} with params {params}'.format(
+                    uri=uri,
+                    params=params
+                )
+            )
 
     @staticmethod
     def delete(uri, **params):
@@ -135,7 +152,12 @@ class Server:
             print("DELETE termiated due to error %s %s" % (exc_type, exc_value))
             for line in traceback.format_tb(exc_traceback):
                 print("Traceback:%s" % line[:-1])
-            raise DataBaseNotReachable('Database not reachable. Tried DELETE on {uri} with params {params}'.format(uri=uri, params=params))
+            raise DataBaseNotReachable(
+                'Database not reachable. Tried DELETE on {uri} with params {params}'.format(
+                    uri=uri,
+                    params=params
+                )
+            )
 
     @staticmethod
     def start_transaction(repo_uri, auth=None):
@@ -174,5 +196,3 @@ class Server:
             raise CannotRollbackTransaction
 
         return response.status_code
-
-

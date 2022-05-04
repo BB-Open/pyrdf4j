@@ -15,8 +15,16 @@ class TestRDFLoading(TestCase):
         self.response_code_ok = HTTPStatus.OK
 
     def tearDown(self):
-        sparql_endpoint = self.rdf4j.drop_repository('test_bulk_load', auth=AUTH['admin'], accept_not_exist=True)
-        sparql_endpoint = self.rdf4j.drop_repository('test_bulk_load2', auth=AUTH['admin'], accept_not_exist=True)
+        sparql_endpoint = self.rdf4j.drop_repository(
+            'test_bulk_load',
+            auth=AUTH['admin'],
+            accept_not_exist=True
+        )
+        sparql_endpoint = self.rdf4j.drop_repository(
+            'test_bulk_load2',
+            auth=AUTH['admin'],
+            accept_not_exist=True
+        )
 
     def test_bulk_load_repo_api(self):
         #        try:

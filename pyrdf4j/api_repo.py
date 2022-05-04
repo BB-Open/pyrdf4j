@@ -28,6 +28,3 @@ class APIRepo(APIBase):
     def replace_triple_data_in_repo(self, triple_data, content_type, auth=None):
         self.empty_repository(auth=auth)
         return self.add_triple_data_to_repo(triple_data, content_type, auth=auth)
-
-
-

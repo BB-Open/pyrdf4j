@@ -125,13 +125,13 @@ for path in MATRIX:
             try:
                 expected = MATRIX[path][actor][method]
                 PARAMS.append([path, actor, method, expected, 'repo'])
-            except:
+            except Exception:
                 PARAMS.append([path, actor, method, None, 'repo'])
         for method in methods_graph:
             try:
                 expected = MATRIX[path][actor][method]
                 PARAMS.append([path, actor, method, expected, 'graph'])
-            except:
+            except Exception:
                 PARAMS.append([path, actor, method, None, 'graph'])
 
 
@@ -185,7 +185,15 @@ class TestAUTH(TestCase):
         assert response.status_code >= 200
 
     def setUp(self):
-        sparql_endpoint = rdf4j_repo.create_repository('test', auth=AUTH['admin'], accept_existing=True)
+        sparql_endpoint = rdf4j_repo.create_repository(
+            'test',
+            auth=AUTH['admin'],
+            accept_existing=True
+        )
 
     def tearDown(self):
-        sparql_endpoint = rdf4j_repo.drop_repository('test', accept_not_exist=True, auth=AUTH['admin'])
+        sparql_endpoint = rdf4j_repo.drop_repository(
+            'test',
+            accept_not_exist=True,
+            auth=AUTH['admin']
+        )
