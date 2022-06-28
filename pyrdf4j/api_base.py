@@ -79,7 +79,7 @@ class APIBase:
         response = self.server.get(config, auth=auth, data={}, headers=headers)
         res = response.content.decode('utf8')
         self.drop_repository(auth=auth)
-        # self.create_repository(res, auth=auth)
+        self.create_repository(res, auth=auth)
 
     def query_repository(self, query, query_type=None, mime_type=None, auth=None, charset=None):
 

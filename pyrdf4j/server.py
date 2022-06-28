@@ -169,7 +169,7 @@ class Server:
             auth=auth
         )
         if response.status_code != HTTPStatus.CREATED:
-            raise CannotStartTransaction
+            raise CannotStartTransaction(response.content)
 
         return response.headers['Location']
 
