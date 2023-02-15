@@ -39,6 +39,7 @@ class RDF4J:
             clear_repository=False,
             repo_uri=None,
             auth=None,
+            base_uri=None,
     ):
         """
         Load the triple_data from the harvest uri
@@ -67,7 +68,7 @@ class RDF4J:
         api = self.get_api(repo_id, repo_uri=repo_uri)
 
         if clear_repository:
-            return api.replace_triple_data_in_repo(triple_data, content_type, auth=auth)
+            return api.replace_triple_data_in_repo(triple_data, content_type, auth=auth, base_uri=base_uri)
 
         #        response = self.create_repository(repo_id, auth=auth)
         #        if response.status_code == HTTPStatus.CONFLICT:
@@ -76,7 +77,7 @@ class RDF4J:
         #        elif response.status_code != HTTPStatus.OK:
         #            raise TerminatingError
 
-        return api.add_triple_data_to_repo(triple_data, content_type, auth=auth)
+        return api.add_triple_data_to_repo(triple_data, content_type, auth=auth, base_uri=base_uri)
 
     def graph_from_uri(self,
                        repository_id,

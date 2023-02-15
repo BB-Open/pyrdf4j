@@ -14,7 +14,7 @@ class APIGraph(APIBase):
         repo_uri = self.server.RDF4J_base + 'repositories/{}/statements'.format(repo_id)
         return repo_uri
 
-    def replace_triple_data_in_repo(self, triple_data, content_type, auth=None, charset=None):
+    def replace_triple_data_in_repo(self, triple_data, content_type, auth=None, charset=None, base_uri=None):
 
         if charset is None:
             charset = DEFAULT_CHARSET
@@ -33,7 +33,7 @@ class APIGraph(APIBase):
 
         return response
 
-    def add_triple_data_to_repo(self, triple_data, content_type, auth=None, charset=None):
+    def add_triple_data_to_repo(self, triple_data, content_type, auth=None, charset=None, base_uri=None):
         if charset is None:
             charset = DEFAULT_CHARSET
         headers = {'Content-Type': content_type + '; charset=' + charset}
